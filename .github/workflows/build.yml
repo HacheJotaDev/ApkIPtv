@@ -25,61 +25,64 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Get Flutter version
+    - name: Show Flutter version
       run: flutter --version
 
-    - name: Generate fresh Android files
+    - name: Create fresh Flutter project for Android files
       run: |
-        # Create a fresh Flutter project in a separate directory
         cd /tmp
-        flutter create --org com.xtream --project-name xtream_iptv fresh_project
+        flutter create --org com.xtream --project-name xtream_iptv fresh_xtream
         
-        # Replace the Android directory in our project
-        rm -rf $GITHUB_WORKSPACE/android
-        cp -r /tmp/fresh_project/android $GITHUB_WORKSPACE/android
+        # Print generated files for debugging
+        echo "====== GENERATED settings.gradle ======"
+        cat /tmp/fresh_xtream/android/settings.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/settings.gradle.kts
+        echo ""
+        echo "====== GENERATED app build.gradle ======"
+        cat /tmp/fresh_xtream/android/app/build.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/app/build.gradle.kts
+        echo ""
+        echo "====== GENERATED root build.gradle ======"
+        cat /tmp/fresh_xtream/android/build.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/build.gradle.kts
+        echo ""
+        echo "====== GENERATED gradle-wrapper.properties ======"
+        cat /tmp/fresh_xtream/android/gradle/wrapper/gradle-wrapper.properties
+        echo ""
+        echo "====== GENERATED AndroidManifest.xml ======"
+        cat /tmp/fresh_xtream/android/app/src/main/AndroidManifest.xml
+        echo ""
+        echo "====== GENERATED MainActivity ======"
+        find /tmp/fresh_xtream/android -name "MainActivity.*" -exec cat {} \;
+
+    - name: Replace Android files
+      run: |
+        rm -rf android
+        cp -r /tmp/fresh_xtream/android .
         
-        # Update namespace and applicationId in build.gradle
-        cd $GITHUB_WORKSPACE
-        find android -name "*.gradle" -o -name "*.gradle.kts" | while read f; do
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f"
-          sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' "$f"
+        # Fix package names
+        find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" -o -name "*.xml" -o -name "*.kt" -o -name "*.java" \) | while read f; do
+          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
+          sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' "$f" 2>/dev/null || true
         done
         
-        # Update compileSdk to 36 for media_kit
-        find android -name "build.gradle" -o -name "build.gradle.kts" | while read f; do
+        # Update SDK versions for media_kit
+        find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) | while read f; do
           sed -i 's/compileSdk = .*/compileSdk = 36/' "$f" 2>/dev/null || true
           sed -i 's/targetSdk = .*/targetSdk = 36/' "$f" 2>/dev/null || true
           sed -i 's/minSdk = .*/minSdk = 21/' "$f" 2>/dev/null || true
         done
         
-        # Update AndroidManifest.xml files
-        find android -name "AndroidManifest.xml" | while read f; do
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f"
-          sed -i 's/xtream_iptv/XTREAM IPTV/g' "$f"
-        done
+        # Fix app label
+        sed -i 's/xtream_iptv/XTREAM IPTV/' android/app/src/main/AndroidManifest.xml
         
-        # Fix MainActivity package
+        # Add cleartext traffic
+        sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+        
+        # Fix directory structure for our package
         mkdir -p android/app/src/main/kotlin/com/xtream/iptv
-        if [ -f android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt ]; then
-          mv android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-          rm -rf android/app/src/main/kotlin/com/example
-        elif [ -f android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt ]; then
-          # Maybe it's .kt format
-          mv android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
+        old_main=$(find android -path "*/kotlin/com/example/xtream_iptv/MainActivity.kt" 2>/dev/null)
+        if [ -n "$old_main" ]; then
+          mv "$old_main" android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
           rm -rf android/app/src/main/kotlin/com/example
         fi
-        
-        # Add usesCleartextTraffic for HTTP streams
-        sed -i 's/android:label/android:usesCleartextTraffic="true"\n        android:label/' android/app/src/main/AndroidManifest.xml
-        
-        echo "=== Final android/app/build.gradle ==="
-        cat android/app/build.gradle
-        echo "=== Final android/settings.gradle ==="
-        cat android/settings.gradle
-        echo "=== Final android/build.gradle ==="
-        cat android/build.gradle
 
     - name: Install dependencies
       run: flutter pub get
