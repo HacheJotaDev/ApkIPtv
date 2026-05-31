@@ -66,25 +66,28 @@ jobs:
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release
+      run: flutter build apk --release 2>&1 | tee build_log.txt
 
-    - name: Locate and copy APK
+    - name: Locate APK and upload
       run: |
         echo "Searching for APK files..."
         find build -name "*.apk" -type f
         APK_PATH=$(find build -name "app-release.apk" -type f | head -1)
+        if [ -z "$APK_PATH" ]; then
+          APK_PATH=$(find build -name "*.apk" -type f | head -1)
+        fi
         if [ -n "$APK_PATH" ]; then
           echo "Found APK at: $APK_PATH"
           mkdir -p /tmp/apk_output
           cp "$APK_PATH" /tmp/apk_output/xtream-iptv.apk
-          echo "APK copied to /tmp/apk_output/xtream-iptv.apk"
           ls -la /tmp/apk_output/
         else
-          echo "ERROR: No APK found!"
+          echo "No APK found, checking build log..."
+          tail -50 build_log.txt
           exit 1
         fi
 
-    - name: Upload APK
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: xtream-iptv-apk
