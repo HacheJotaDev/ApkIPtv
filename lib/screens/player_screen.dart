@@ -339,7 +339,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       activeTrackColor: const Color(0xFFE50914),
                       inactiveTrackColor: Colors.white24,
                       thumbColor: const Color(0xFFE50914),
-                      bufferedTrackColor: Colors.grey,
                     ),
                     child: Slider(
                       value: duration.inMilliseconds > 0 
