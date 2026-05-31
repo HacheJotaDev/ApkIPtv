@@ -25,15 +25,15 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.hj.xtream.iptv"
-    compileSdk 36
+    compileSdk 34
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '11'
     }
 
     sourceSets {
@@ -58,12 +58,13 @@ android {
     }
 }
 
-// Force compatible dependency versions for AGP 8.7.0
+// Force compatible dependency versions
 configurations.all {
     resolutionStrategy {
         force 'androidx.browser:browser:1.8.0'
         force 'androidx.core:core:1.13.1'
         force 'androidx.core:core-ktx:1.13.1'
+        force 'androidx.annotation:annotation:1.7.1'
     }
 }
 

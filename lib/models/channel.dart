@@ -24,7 +24,7 @@ class Channel {
       id: json['stream_id']?.toString() ?? '',
       name: TextUtils.cleanText(json['name']?.toString()) ?? 'Sin nombre',
       categoryId: TextUtils.cleanText(json['category_id']?.toString()) ?? '',
-      streamUrl: '$serverUrl/live/$username/$password/${json['stream_id']}.m3u8',
+      streamUrl: '$serverUrl/live/$username/$password/${json['stream_id']}.ts',
       logo: json['stream_icon']?.toString() ?? '',
       epgChannelId: json['epg_channel_id']?.toString() ?? '',
       streamType: 'live',

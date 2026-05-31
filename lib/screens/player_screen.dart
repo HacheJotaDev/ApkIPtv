@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
@@ -6,6 +7,8 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
 
 class PlayerScreen extends StatefulWidget {
   final String title;
@@ -117,7 +120,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
       if (mounted && !_isDisposed) {
         setState(() => _isBuffering = buffering);
         if (buffering) {
-          // While buffering, show controls
           _cancelHideControlsTimer();
         } else if (_isPlaying) {
           _startHideControlsTimer();
@@ -157,6 +159,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
         httpHeaders: {
           'User-Agent': 'XTREAM-IPTV/2.0',
           'Icy-MetaData': '1',
+          'Accept': '*/*',
         },
       );
 
@@ -207,6 +210,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
         httpHeaders: {
           'User-Agent': 'XTREAM-IPTV/2.0',
           'Icy-MetaData': '1',
+          'Accept': '*/*',
         },
       );
       await _player.open(media);
@@ -253,18 +257,265 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     }
   }
 
-  Future<void> _openWithExternalPlayer() async {
-    // Try to open the stream URL with an external player (VLC, MX Player, etc.)
+  // ===== CAST TO TV FUNCTIONALITY =====
+
+  /// Show cast options bottom sheet
+  void _showCastDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF121421),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade700,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.cast, color: Color(0xFFF5C518), size: 24),
+                const SizedBox(width: 10),
+                const Text(
+                  'Transmitir a TV',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Selecciona como quieres ver el contenido en tu TV',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            // Option 1: Open with VLC
+            _CastOption(
+              icon: Icons.play_circle_filled,
+              iconColor: Colors.orange,
+              title: 'Abrir con VLC',
+              subtitle: 'Reproduce en VLC para transmitir a Chromecast',
+              onTap: () {
+                Navigator.pop(context);
+                _openWithVlc();
+              },
+            ),
+            const SizedBox(height: 10),
+            // Option 2: Open with MX Player
+            _CastOption(
+              icon: Icons.movie,
+              iconColor: Colors.blue,
+              title: 'Abrir con MX Player',
+              subtitle: 'Reproduce con MX Player y su funcion de cast',
+              onTap: () {
+                Navigator.pop(context);
+                _openWithMxPlayer();
+              },
+            ),
+            const SizedBox(height: 10),
+            // Option 3: Share URL to cast apps
+            _CastOption(
+              icon: Icons.share,
+              iconColor: Colors.green,
+              title: 'Compartir enlace',
+              subtitle: 'Envia el enlace a AllCast, BubbleUPnP u otra app de cast',
+              onTap: () {
+                Navigator.pop(context);
+                _shareForCast();
+              },
+            ),
+            const SizedBox(height: 10),
+            // Option 4: Open in web browser (for Smart TVs)
+            _CastOption(
+              icon: Icons.language,
+              iconColor: Colors.purple,
+              title: 'Abrir en navegador',
+              subtitle: 'Abre el stream en el navegador de tu Smart TV',
+              onTap: () {
+                Navigator.pop(context);
+                _openInBrowser();
+              },
+            ),
+            const SizedBox(height: 10),
+            // Option 5: Copy URL
+            _CastOption(
+              icon: Icons.copy,
+              iconColor: Colors.cyan,
+              title: 'Copiar enlace',
+              subtitle: 'Copia la URL para pegarla en cualquier reproductor',
+              onTap: () {
+                Navigator.pop(context);
+                _copyStreamUrl();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Open stream with VLC for Android
+  Future<void> _openWithVlc() async {
+    if (!Platform.isAndroid) {
+      _openWithExternalPlayer();
+      return;
+    }
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.VIEW',
+        data: widget.url,
+        type: 'video/*',
+        package: 'org.videolan.vlc',
+        flags: <int>[
+          Flag.FLAG_ACTIVITY_NEW_TASK,
+          Flag.FLAG_ACTIVITY_CLEAR_TOP,
+        ],
+      );
+      await intent.launch();
+    } catch (e) {
+      debugPrint('VLC not found, trying generic intent: $e');
+      // VLC not installed, try generic video intent
+      _openWithGenericVideoPlayer();
+    }
+  }
+
+  /// Open stream with MX Player
+  Future<void> _openWithMxPlayer() async {
+    if (!Platform.isAndroid) {
+      _openWithExternalPlayer();
+      return;
+    }
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.VIEW',
+        data: widget.url,
+        type: 'video/*',
+        package: 'com.mxtech.videoplayer.ad',
+        flags: <int>[
+          Flag.FLAG_ACTIVITY_NEW_TASK,
+          Flag.FLAG_ACTIVITY_CLEAR_TOP,
+        ],
+      );
+      await intent.launch();
+    } catch (e) {
+      debugPrint('MX Player not found, trying free version: $e');
+      try {
+        final intent = AndroidIntent(
+          action: 'android.intent.action.VIEW',
+          data: widget.url,
+          type: 'video/*',
+          package: 'com.mxtech.videoplayer.free',
+          flags: <int>[
+            Flag.FLAG_ACTIVITY_NEW_TASK,
+            Flag.FLAG_ACTIVITY_CLEAR_TOP,
+          ],
+        );
+        await intent.launch();
+      } catch (e2) {
+        debugPrint('MX Player free not found either: $e2');
+        _openWithGenericVideoPlayer();
+      }
+    }
+  }
+
+  /// Open with any available video player via Android intent
+  Future<void> _openWithGenericVideoPlayer() async {
+    if (!Platform.isAndroid) {
+      _openWithExternalPlayer();
+      return;
+    }
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.VIEW',
+        data: widget.url,
+        type: 'video/*',
+        flags: <int>[
+          Flag.FLAG_ACTIVITY_NEW_TASK,
+        ],
+      );
+      await intent.launch();
+    } catch (e) {
+      debugPrint('Generic video intent failed: $e');
+      // Final fallback: share
+      _shareForCast();
+    }
+  }
+
+  /// Share URL to cast apps (AllCast, BubbleUPnP, etc.)
+  void _shareForCast() {
+    Share.share(
+      widget.url,
+      subject: widget.title,
+    );
+  }
+
+  /// Open stream in a web browser (useful for Smart TV browsers)
+  Future<void> _openInBrowser() async {
     final uri = Uri.tryParse(widget.url);
     if (uri != null) {
-      // Try intent-based launch for Android
       try {
         await launchUrl(
           uri,
           mode: LaunchMode.externalApplication,
         );
       } catch (e) {
-        // Fallback: share the URL so user can pick an app
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No se pudo abrir en navegador: $e'),
+              backgroundColor: Colors.red.shade800,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// Copy stream URL to clipboard
+  void _copyStreamUrl() {
+    Clipboard.setData(ClipboardData(text: widget.url));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Enlace copiado al portapapeles'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green.shade800,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Legacy external player opener (fallback)
+  Future<void> _openWithExternalPlayer() async {
+    if (Platform.isAndroid) {
+      _openWithGenericVideoPlayer();
+      return;
+    }
+    final uri = Uri.tryParse(widget.url);
+    if (uri != null) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (e) {
         if (mounted) {
           await Share.share(widget.url);
         }
@@ -422,7 +673,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               ),
                             ),
                           const SizedBox(width: 6),
-                          // Cast/external player button
+                          // Cast button - opens cast dialog
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
@@ -430,7 +681,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.cast, color: Color(0xFFF5C518), size: 22),
-                              onPressed: _openWithExternalPlayer,
+                              onPressed: _showCastDialog,
                               tooltip: 'Transmitir a TV',
                             ),
                           ),
@@ -449,11 +700,17 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               ),
                               onSelected: (value) {
                                 switch (value) {
+                                  case 'cast':
+                                    _showCastDialog();
+                                    break;
                                   case 'external':
                                     _openWithExternalPlayer();
                                     break;
                                   case 'share':
                                     _shareStreamUrl();
+                                    break;
+                                  case 'copy':
+                                    _copyStreamUrl();
                                     break;
                                   case 'retry':
                                     _retryCount = 0;
@@ -487,6 +744,16 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               },
                               itemBuilder: (context) => [
                                 const PopupMenuItem(
+                                  value: 'cast',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.cast, color: Color(0xFFF5C518), size: 20),
+                                      SizedBox(width: 12),
+                                      Text('Transmitir a TV', style: TextStyle(color: Colors.white)),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
                                   value: 'external',
                                   child: Row(
                                     children: [
@@ -503,6 +770,16 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                       Icon(Icons.share, color: Color(0xFFF5C518), size: 20),
                                       SizedBox(width: 12),
                                       Text('Compartir enlace del stream', style: TextStyle(color: Colors.white)),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'copy',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.copy, color: Color(0xFFF5C518), size: 20),
+                                      SizedBox(width: 12),
+                                      Text('Copiar enlace', style: TextStyle(color: Colors.white)),
                                     ],
                                   ),
                                 ),
@@ -541,8 +818,8 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                       child: Text(
                                         e.$2,
                                         style: TextStyle(
-                                          color: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.')) 
-                                              ? const Color(0xFFF5C518) 
+                                          color: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.'))
+                                              ? const Color(0xFFF5C518)
                                               : Colors.white70,
                                           fontWeight: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.'))
                                               ? FontWeight.bold
@@ -739,12 +1016,17 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                           _QuickAction(
                             icon: Icons.cast_connected,
                             label: 'Transmitir',
-                            onTap: _openWithExternalPlayer,
+                            onTap: _showCastDialog,
                           ),
                           _QuickAction(
                             icon: Icons.share,
                             label: 'Compartir',
-                            onTap: _shareStreamUrl,
+                            onTap: _shareForCast,
+                          ),
+                          _QuickAction(
+                            icon: Icons.copy,
+                            label: 'Copiar URL',
+                            onTap: _copyStreamUrl,
                           ),
                           _QuickAction(
                             icon: Icons.refresh,
@@ -833,6 +1115,24 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                 border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5)),
                               ),
                               child: ElevatedButton.icon(
+                                onPressed: _showCastDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1A1D30),
+                                  shadowColor: Colors.transparent,
+                                  foregroundColor: const Color(0xFFF5C518),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: const Icon(Icons.cast, size: 18),
+                                label: const Text('EN TV'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5)),
+                              ),
+                              child: ElevatedButton.icon(
                                 onPressed: _openWithExternalPlayer,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF1A1D30),
@@ -843,12 +1143,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                 icon: const Icon(Icons.play_circle_outline, size: 18),
                                 label: const Text('EXTERNO'),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            TextButton.icon(
-                              onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(Icons.arrow_back, size: 18),
-                              label: const Text('VOLVER'),
                             ),
                           ],
                         ),
@@ -880,7 +1174,7 @@ class _QuickAction extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -895,6 +1189,72 @@ class _QuickAction extends StatelessWidget {
               label,
               style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Cast option tile for the bottom sheet
+class _CastOption extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _CastOption({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1D30),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
           ],
         ),
       ),
