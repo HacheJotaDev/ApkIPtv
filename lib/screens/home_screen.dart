@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/iptv_provider.dart';
 import 'live_tv_screen.dart';
 import 'movies_screen.dart';
-import 'series_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,14 +20,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final List<Widget> _screens = [
     const LiveTvScreen(),
     const MoviesScreen(),
-    const SeriesScreen(),
     const SettingsScreen(),
   ];
 
   final List<_NavItem> _navItems = [
     _NavItem(icon: Icons.live_tv_outlined, activeIcon: Icons.live_tv, label: 'TV en Vivo'),
     _NavItem(icon: Icons.movie_outlined, activeIcon: Icons.movie, label: 'Peliculas'),
-    _NavItem(icon: Icons.tv_outlined, activeIcon: Icons.tv, label: 'Series'),
     _NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Ajustes'),
   ];
 
@@ -103,9 +100,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ? provider.liveChannels.length
                       : index == 1
                           ? provider.vodMovies.length
-                          : index == 2
-                              ? provider.seriesList.length
-                              : 0,
+                          : 0,
                   onTap: () => _onTabTapped(index),
                 );
               }),

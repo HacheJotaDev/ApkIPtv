@@ -105,22 +105,6 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              _SettingsTile(
-                icon: Icons.tv_outlined,
-                title: 'Series',
-                subtitle: '${provider.seriesList.length} series',
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00BCD4).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${provider.seriesCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 11, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
             ],
           ),
 

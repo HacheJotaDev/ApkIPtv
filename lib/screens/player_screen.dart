@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:share_plus/share_plus.dart';
 
 class PlayerScreen extends StatefulWidget {
   final String title;
@@ -39,7 +38,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
   static const int _maxRetries = 5;
   Timer? _hideControlsTimer;
   Timer? _retryTimer;
-  Timer? _keepAliveTimer;
   bool _isDisposed = false;
   bool _isLiveStream = false;
   StreamSubscription? _playingSub;
@@ -48,10 +46,9 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
   StreamSubscription? _durationSub;
   StreamSubscription? _bufferingSub;
 
-  // Accent color - modern teal/cyan
+  // Accent color
   static const Color accentColor = Color(0xFF00BCD4);
   static const Color accentDark = Color(0xFF0097A7);
-  static const Color accentLight = Color(0xFF4DD0E1);
 
   @override
   void initState() {
@@ -68,38 +65,13 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
         debugPrint('Player ready for: ${widget.title}');
       },
     ));
+
     _controller = VideoController(_player);
 
     WakelockPlus.enable();
     _setupListeners();
     _initPlayer();
     _startHideControlsTimer();
-
-    // Keep-alive timer for live streams - prevents stream from timing out
-    // and forces the player to keep reading data
-    if (_isLiveStream) {
-      _keepAliveTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-        if (!_isDisposed && _isPlaying) {
-          // For live HLS streams, periodically check if the player has stalled
-          // and force a resume if needed
-          debugPrint('Keep-alive tick for live stream: ${widget.title}');
-          _checkLiveStreamHealth();
-        }
-      });
-    }
-  }
-
-  /// Check if live stream is healthy and force resume if stalled
-  void _checkLiveStreamHealth() {
-    if (_isDisposed || !_isPlaying) return;
-
-    // If the player reports a very short duration for a live stream,
-    // it likely misinterpreted the first .ts segment as the whole video
-    if (_isLiveStream && _duration.inSeconds > 0 && _duration.inSeconds <= 30) {
-      debugPrint('Live stream appears stalled (duration=${_duration.inSeconds}s), forcing live mode');
-      // Force seek to "live" edge by opening the stream again without stopping
-      _player.seek(Duration.zero);
-    }
   }
 
   void _setupListeners() {
@@ -113,12 +85,11 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     _errorSub = _player.stream.error.listen((error) {
       if (mounted && !_isDisposed && error.isNotEmpty) {
         debugPrint('Player error: $error');
-        // For live streams, auto-retry more aggressively
-        if (_retryCount < _maxRetries && _isLiveStream) {
+        if (_retryCount < _maxRetries) {
           _retryCount++;
           debugPrint('Auto-retry attempt $_retryCount/$_maxRetries');
           _retryTimer?.cancel();
-          _retryTimer = Timer(Duration(seconds: 3), () {
+          _retryTimer = Timer(const Duration(seconds: 3), () {
             if (mounted && !_isDisposed) _retryPlayback();
           });
         } else {
@@ -134,29 +105,15 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     _positionSub = _player.stream.position.listen((position) {
       if (mounted && !_isDisposed) {
         setState(() => _position = position);
-
-        // For live HLS streams: if position reaches near the short "duration",
-        // the player thinks the video ended but it's actually a live stream.
-        // Force the player to keep playing.
-        if (_isLiveStream && _duration.inSeconds > 0 && _duration.inSeconds <= 30) {
-          if (position.inSeconds >= _duration.inSeconds - 2) {
-            debugPrint('Live stream hit false end at ${position.inSeconds}s/${_duration.inSeconds}s - forcing continue');
-            // Seek back slightly and the stream will continue buffering new segments
-            _player.seek(Duration(seconds: (_duration.inSeconds - 5).clamp(0, _duration.inSeconds)));
-          }
-        }
       }
     });
 
     _durationSub = _player.stream.duration.listen((duration) {
       if (mounted && !_isDisposed) {
-        // For live HLS streams, the duration reported is often just the first
-        // segment duration (~10 seconds). We ignore short durations for live
-        // streams and treat them as infinite/unknown.
-        if (_isLiveStream && duration.inSeconds > 0 && duration.inSeconds < 60) {
-          debugPrint('Live stream reported short duration: ${duration.inSeconds}s - ignoring (HLS segment, not total duration)');
-          // Don't update _duration for live streams with short durations
-          // This prevents the player from thinking the video ended
+        // For live HLS streams, ignore short duration reports
+        // These are just the first .ts segment duration, not the total video length
+        if (_isLiveStream && duration.inSeconds > 0 && duration.inSeconds < 120) {
+          debugPrint('Live stream: ignoring short duration report of ${duration.inSeconds}s');
           return;
         }
         setState(() => _duration = duration);
@@ -200,7 +157,20 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
 
   Future<void> _initPlayer() async {
     try {
-      // Configure media with proper headers for live stream stability
+      // For live streams, set MPV properties to handle HLS properly
+      // This prevents the 10-second pause bug where mpv thinks the first
+      // .ts segment is the entire video
+      if (_isLiveStream) {
+        try {
+          await _player.setProperty('force-seekable', 'no');
+          await _player.setProperty('cache', 'yes');
+          await _player.setProperty('demux-max-bytes', '100MiB');
+          await _player.setProperty('demux-max-back-bytes', '50MiB');
+        } catch (e) {
+          debugPrint('MPV property set error (non-fatal): $e');
+        }
+      }
+
       final media = Media(
         widget.url,
         httpHeaders: {
@@ -209,17 +179,9 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
           'Accept': '*/*',
           'Connection': 'keep-alive',
         },
-        // For HLS live streams, tell media_kit to treat it as live
-        // This prevents the player from thinking the first segment is the whole video
       );
-
       await _player.open(media);
-
-      // For live streams: set specific properties for stability
-      if (_isLiveStream) {
-        await _player.play();
-      }
-
+      await _player.play();
       await _player.setVolume(_volume * 100);
     } catch (e) {
       if (mounted && !_isDisposed) {
@@ -251,6 +213,17 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     try {
       await _player.stop();
       await Future.delayed(const Duration(milliseconds: 800));
+
+      if (_isLiveStream) {
+        try {
+          await _player.setProperty('force-seekable', 'no');
+          await _player.setProperty('cache', 'yes');
+          await _player.setProperty('demux-max-bytes', '100MiB');
+          await _player.setProperty('demux-max-back-bytes', '50MiB');
+        } catch (e) {
+          debugPrint('MPV property set error (non-fatal): $e');
+        }
+      }
 
       final media = Media(
         widget.url,
@@ -305,32 +278,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     }
   }
 
-  /// Copy stream URL to clipboard
-  void _copyStreamUrl() {
-    Clipboard.setData(ClipboardData(text: widget.url));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 18),
-              SizedBox(width: 10),
-              Expanded(child: Text('Enlace copiado al portapapeles')),
-            ],
-          ),
-          backgroundColor: Colors.teal.shade800,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  void _shareStreamUrl() {
-    Share.share('${widget.title}\n${widget.url}');
-  }
-
   String _formatDuration(Duration d) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = d.inHours;
@@ -347,7 +294,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     _isDisposed = true;
     _cancelHideControlsTimer();
     _retryTimer?.cancel();
-    _keepAliveTimer?.cancel();
     _playingSub?.cancel();
     _errorSub?.cancel();
     _positionSub?.cancel();
@@ -479,8 +425,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               ),
                               onSelected: (value) {
                                 switch (value) {
-                                  case 'share': _shareStreamUrl(); break;
-                                  case 'copy': _copyStreamUrl(); break;
                                   case 'retry': _retryCount = 0; _retryPlayback(); break;
                                   case 'speed_05': _player.setRate(0.5); setState(() => _speed = 0.5); break;
                                   case 'speed_075': _player.setRate(0.75); setState(() => _speed = 0.75); break;
@@ -491,8 +435,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'share', child: Row(children: [Icon(Icons.share, color: accentColor, size: 20), SizedBox(width: 12), Text('Compartir enlace', style: TextStyle(color: Colors.white))])),
-                                const PopupMenuItem(value: 'copy', child: Row(children: [Icon(Icons.copy, color: accentColor, size: 20), SizedBox(width: 12), Text('Copiar enlace', style: TextStyle(color: Colors.white))])),
                                 const PopupMenuItem(value: 'retry', child: Row(children: [Icon(Icons.refresh, color: accentColor, size: 20), SizedBox(width: 12), Text('Reintentar', style: TextStyle(color: Colors.white))])),
                                 if (!_isLiveStream) ...[
                                   const PopupMenuDivider(),
@@ -593,7 +535,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                   ),
                 ),
 
-              // Live stream bottom bar
+              // Live stream bottom bar - just play/pause and retry
               if (_showControls && _isLiveStream && !_hasError)
                 Positioned(
                   bottom: 0, left: 0, right: 0,
@@ -604,11 +546,29 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                         gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Color(0xBB000000), Colors.transparent]),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _QuickAction(icon: Icons.share, label: 'Compartir', onTap: () => Share.share(widget.url, subject: widget.title)),
-                          _QuickAction(icon: Icons.copy, label: 'Copiar URL', onTap: _copyStreamUrl),
-                          _QuickAction(icon: Icons.refresh, label: 'Reintentar', onTap: () { _retryCount = 0; _retryPlayback(); }),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: IconButton(
+                              icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 32),
+                              onPressed: () => _player.playOrPause(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
+                              onPressed: () { _retryCount = 0; _retryPlayback(); },
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -650,37 +610,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                 ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: const Color(0xFF00BCD4), size: 22),
-            const SizedBox(height: 4),
-            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
-          ],
         ),
       ),
     );

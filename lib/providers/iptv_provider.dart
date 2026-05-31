@@ -34,6 +34,7 @@ class IptvProvider extends ChangeNotifier {
   List<Category> get liveCategories => _liveCategories;
   List<Channel> _liveChannels = [];
   List<Channel> get liveChannels => _liveChannels;
+  List<Channel> _allLiveChannels = []; // Master list - never filtered
   String? _selectedLiveCategory;
   String? get selectedLiveCategory => _selectedLiveCategory;
 
@@ -42,6 +43,7 @@ class IptvProvider extends ChangeNotifier {
   List<Category> get vodCategories => _vodCategories;
   List<Movie> _vodMovies = [];
   List<Movie> get vodMovies => _vodMovies;
+  List<Movie> _allVodMovies = []; // Master list - never filtered
   String? _selectedVodCategory;
   String? get selectedVodCategory => _selectedVodCategory;
 
@@ -168,7 +170,9 @@ class IptvProvider extends ChangeNotifier {
 
         final parsed = M3uParser.parseM3u(content);
         _liveChannels = List<Channel>.from(parsed['channels']);
+        _allLiveChannels = List.from(_liveChannels);
         _vodMovies = List<Movie>.from(parsed['movies']);
+        _allVodMovies = List.from(_vodMovies);
         _liveCategories = List<Category>.from(parsed['categories'].where((c) => c.type == 'live'));
         _vodCategories = List<Category>.from(parsed['categories'].where((c) => c.type == 'vod'));
         _connectionType = 'm3u';
@@ -215,9 +219,11 @@ class IptvProvider extends ChangeNotifier {
     _seriesCategories = await _xtreamService.getSeriesCategories(_credentials!);
     notifyListeners();
 
-    // Load streams
+    // Load streams into master lists
     _liveChannels = await _xtreamService.getLiveStreams(_credentials!);
+    _allLiveChannels = List.from(_liveChannels);
     _vodMovies = await _xtreamService.getVodStreams(_credentials!);
+    _allVodMovies = List.from(_vodMovies);
     _seriesList = await _xtreamService.getSeriesList(_credentials!);
     notifyListeners();
   }
@@ -228,10 +234,22 @@ class IptvProvider extends ChangeNotifier {
     notifyListeners();
 
     if (_connectionType == 'xtream' && _credentials != null) {
-      _liveChannels = await _xtreamService.getLiveStreams(_credentials!, categoryId: categoryId);
+      if (categoryId == null) {
+        _liveChannels = List.from(_allLiveChannels);
+      } else {
+        _liveChannels = _allLiveChannels.where((c) => c.categoryId == categoryId).toList();
+        if (_liveChannels.isEmpty) {
+          final apiChannels = await _xtreamService.getLiveStreams(_credentials!, categoryId: categoryId);
+          if (apiChannels.isNotEmpty) {
+            _liveChannels = apiChannels;
+          }
+        }
+      }
     } else {
       if (categoryId != null) {
-        _liveChannels = _liveChannels.where((c) => c.categoryId == categoryId).toList();
+        _liveChannels = _allLiveChannels.where((c) => c.categoryId == categoryId).toList();
+      } else {
+        _liveChannels = List.from(_allLiveChannels);
       }
     }
 
@@ -245,10 +263,26 @@ class IptvProvider extends ChangeNotifier {
     notifyListeners();
 
     if (_connectionType == 'xtream' && _credentials != null) {
-      _vodMovies = await _xtreamService.getVodStreams(_credentials!, categoryId: categoryId);
+      if (categoryId == null) {
+        // "All" selected - show all movies from master list
+        _vodMovies = List.from(_allVodMovies);
+      } else {
+        // Filter locally from master list instead of making a new API call
+        // This prevents movies from disappearing when the API returns empty
+        _vodMovies = _allVodMovies.where((m) => m.categoryId == categoryId).toList();
+        // If local filter returns nothing, try API as fallback
+        if (_vodMovies.isEmpty) {
+          final apiMovies = await _xtreamService.getVodStreams(_credentials!, categoryId: categoryId);
+          if (apiMovies.isNotEmpty) {
+            _vodMovies = apiMovies;
+          }
+        }
+      }
     } else {
       if (categoryId != null) {
-        _vodMovies = _vodMovies.where((m) => m.categoryId == categoryId).toList();
+        _vodMovies = _allVodMovies.where((m) => m.categoryId == categoryId).toList();
+      } else {
+        _vodMovies = List.from(_allVodMovies);
       }
     }
 
@@ -319,8 +353,10 @@ class IptvProvider extends ChangeNotifier {
     _connectionType = 'xtream';
     _liveCategories = [];
     _liveChannels = [];
+    _allLiveChannels = [];
     _vodCategories = [];
     _vodMovies = [];
+    _allVodMovies = [];
     _seriesCategories = [];
     _seriesList = [];
     _selectedLiveCategory = null;
