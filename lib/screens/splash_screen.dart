@@ -108,12 +108,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo with glow
+                  // Logo with glow and image
                   Container(
-                    width: 140,
-                    height: 140,
+                    width: 150,
+                    height: 150,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(36),
+                      borderRadius: BorderRadius.circular(40),
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -136,10 +136,25 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.play_circle_fill,
-                      size: 80,
-                      color: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(36),
+                          child: Image.asset(
+                            'assets/logo.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.play_circle_fill,
+                                size: 80,
+                                color: Colors.white,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -154,13 +169,18 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       opacity: _textController,
                       child: Column(
                         children: [
-                          const Text(
-                            'XTREAM IPTV',
-                            style: TextStyle(
-                              fontSize: 38,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 4,
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFF00e5ff), Color(0xFF00b0ff), Color(0xFF0066ff)],
+                            ).createShader(bounds),
+                            child: const Text(
+                              'XTREAM IPTV',
+                              style: TextStyle(
+                                fontSize: 38,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 4,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -175,7 +195,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               ),
                             ),
                             child: const Text(
-                              'Sin VIP • Sin Anuncios • 100% Libre',
+                              'Sin VIP  •  Sin Anuncios  •  100% Libre',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF00b0ff),

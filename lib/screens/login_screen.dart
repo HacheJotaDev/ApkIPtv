@@ -125,12 +125,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo with glow
+                  // Logo with glow and image
                   Container(
-                    width: 90,
-                    height: 90,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(28),
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -144,16 +144,36 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.play_circle_fill, size: 50, color: Colors.white),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: Padding(
+                        padding: const EdgeInsets.all(3),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: Image.asset(
+                            'assets/logo.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.play_circle_fill, size: 50, color: Colors.white);
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
-                    'XTREAM IPTV',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 3,
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFF00e5ff), Color(0xFF00b0ff), Color(0xFF0066ff)],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'XTREAM IPTV',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 3,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -165,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       border: Border.all(color: const Color(0xFF00b0ff).withOpacity(0.2), width: 1),
                     ),
                     child: const Text(
-                      'Sin VIP • Sin Anuncios • 100% Libre',
+                      'Sin VIP  •  Sin Anuncios  •  100% Libre',
                       style: TextStyle(fontSize: 10, color: Color(0xFF00b0ff), letterSpacing: 1),
                     ),
                   ),

@@ -2,12 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'providers/iptv_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+/// Background message handler must be a top-level function
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('FCM Background message: ${message.messageId}');
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize MediaKit
   MediaKit.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Set up background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Request notification permissions
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+    provisional: false,
+  );
+
+  // Get and print FCM token for testing
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  debugPrint('=======================================');
+  debugPrint('FCM Token: $fcmToken');
+  debugPrint('=======================================');
+
+  // Listen for foreground messages
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    debugPrint('FCM Foreground message: ${message.messageId}');
+    debugPrint('Title: ${message.notification?.title}');
+    debugPrint('Body: ${message.notification?.body}');
+  });
+
+  // Listen for messages when app is opened from background
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    debugPrint('FCM Opened app message: ${message.messageId}');
+  });
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

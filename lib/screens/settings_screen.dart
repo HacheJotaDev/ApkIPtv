@@ -203,7 +203,22 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.code, color: Colors.white, size: 32),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/logo.jpg',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.code, color: Colors.white, size: 32);
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ShaderMask(
