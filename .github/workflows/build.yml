@@ -25,6 +25,41 @@ jobs:
       with:
         channel: 'stable'
 
+    - name: Regenerate Android project files
+      run: |
+        # Backup our app code
+        cp -r lib /tmp/lib_backup
+        cp pubspec.yaml /tmp/pubspec_backup.yaml
+        
+        # Create a temp flutter project to get correct Android files
+        cd /tmp
+        flutter create --org com.xtream --project-name xtream_iptv temp_project
+        
+        # Replace our Android directory with the freshly generated one
+        rm -rf $GITHUB_WORKSPACE/android
+        cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/android
+        
+        # Update namespace and applicationId
+        sed -i 's/com.example.xtream_iptv/com.xtream.iptv/g' $GITHUB_WORKSPACE/android/app/build.gradle
+        sed -i 's/com.example.xtream_iptv/com.xtream.iptv/g' $GITHUB_WORKSPACE/android/app/src/main/AndroidManifest.xml
+        sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' $GITHUB_WORKSPACE/android/app/src/debug/AndroidManifest.xml 2>/dev/null || true
+        sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' $GITHUB_WORKSPACE/android/app/src/profile/AndroidManifest.xml 2>/dev/null || true
+        
+        # Move MainActivity
+        mkdir -p $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/xtream/iptv
+        if [ -f $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt ]; then
+          mv $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
+          rm -rf $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/example
+        fi
+        
+        # Update app label
+        sed -i 's/xtream_iptv/XTREAM IPTV/g' $GITHUB_WORKSPACE/android/app/src/main/AndroidManifest.xml
+        
+        # Set compileSdk to 36 and targetSdk to 36 for media_kit
+        sed -i 's/compileSdk = .*/compileSdk = 36/' $GITHUB_WORKSPACE/android/app/build.gradle
+        sed -i 's/targetSdk = .*/targetSdk = 36/' $GITHUB_WORKSPACE/android/app/build.gradle
+        sed -i 's/minSdk = .*/minSdk = 21/' $GITHUB_WORKSPACE/android/app/build.gradle
+
     - name: Install dependencies
       run: flutter pub get
 
