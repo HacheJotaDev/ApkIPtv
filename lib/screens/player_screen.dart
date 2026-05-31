@@ -266,16 +266,14 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
       } catch (e) {
         // Fallback: share the URL so user can pick an app
         if (mounted) {
-          SharePlus.instance.share(ShareParams(text: widget.url));
+          await Share.share(widget.url);
         }
       }
     }
   }
 
   void _shareStreamUrl() {
-    SharePlus.instance.share(ShareParams(
-      text: '${widget.title}\n${widget.url}',
-    ));
+    Share.share('${widget.title}\n${widget.url}');
   }
 
   String _formatDuration(Duration d) {
