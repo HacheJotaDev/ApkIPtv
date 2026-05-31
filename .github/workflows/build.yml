@@ -25,40 +25,66 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Regenerate Android project files
+    - name: Get Flutter version
+      run: flutter --version
+
+    - name: Create fresh project and overlay code
       run: |
-        # Backup our app code
+        # Save our app code
         cp -r lib /tmp/lib_backup
         cp pubspec.yaml /tmp/pubspec_backup.yaml
+        cp -r assets /tmp/assets_backup 2>/dev/null || true
         
-        # Create a temp flutter project to get correct Android files
+        # Go to temp dir and create fresh Flutter project
         cd /tmp
-        flutter create --org com.xtream --project-name xtream_iptv temp_project
+        flutter create --org com.xtream --project-name xtream_iptv fresh_project
         
-        # Replace our Android directory with the freshly generated one
-        rm -rf $GITHUB_WORKSPACE/android
-        cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/android
+        # Show what was generated
+        echo "=== Generated build.gradle ==="
+        cat /tmp/fresh_project/android/app/build.gradle
+        echo "=== Generated settings.gradle ==="
+        cat /tmp/fresh_project/android/settings.gradle
+        echo "=== Generated root build.gradle ==="
+        cat /tmp/fresh_project/android/build.gradle
+        echo "=== Generated gradle-wrapper.properties ==="
+        cat /tmp/fresh_project/android/gradle/wrapper/gradle-wrapper.properties
+
+    - name: Replace Android files with fresh ones
+      run: |
+        # Replace the entire android directory
+        rm -rf android
+        cp -r /tmp/fresh_project/android .
         
-        # Update namespace and applicationId
-        sed -i 's/com.example.xtream_iptv/com.xtream.iptv/g' $GITHUB_WORKSPACE/android/app/build.gradle
-        sed -i 's/com.example.xtream_iptv/com.xtream.iptv/g' $GITHUB_WORKSPACE/android/app/src/main/AndroidManifest.xml
-        sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' $GITHUB_WORKSPACE/android/app/src/debug/AndroidManifest.xml 2>/dev/null || true
-        sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' $GITHUB_WORKSPACE/android/app/src/profile/AndroidManifest.xml 2>/dev/null || true
+        # Customize for our app
+        # Update app label
+        sed -i 's/xtream_iptv/XTREAM IPTV/g' android/app/src/main/AndroidManifest.xml
         
-        # Move MainActivity
-        mkdir -p $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/xtream/iptv
-        if [ -f $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt ]; then
-          mv $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-          rm -rf $GITHUB_WORKSPACE/android/app/src/main/kotlin/com/example
+        # Update compileSdk and targetSdk to 36 for media_kit
+        if grep -q 'compileSdk' android/app/build.gradle; then
+          sed -i 's/compileSdk = .*/compileSdk = 36/' android/app/build.gradle
+        fi
+        if grep -q 'targetSdk' android/app/build.gradle; then
+          sed -i 's/targetSdk = .*/targetSdk = 36/' android/app/build.gradle
+        fi
+        if grep -q 'minSdk' android/app/build.gradle; then
+          sed -i 's/minSdk = .*/minSdk = 21/' android/app/build.gradle
+        fi
+
+        # Move MainActivity to our package
+        mkdir -p android/app/src/main/kotlin/com/xtream/iptv
+        if [ -f android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt ]; then
+          mv android/app/src/main/kotlin/com/example/xtream_iptv/MainActivity.kt android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
+          # Fix package name
+          sed -i 's/com.example.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
+          rm -rf android/app/src/main/kotlin/com/example
         fi
         
-        # Update app label
-        sed -i 's/xtream_iptv/XTREAM IPTV/g' $GITHUB_WORKSPACE/android/app/src/main/AndroidManifest.xml
-        
-        # Set compileSdk to 36 and targetSdk to 36 for media_kit
-        sed -i 's/compileSdk = .*/compileSdk = 36/' $GITHUB_WORKSPACE/android/app/build.gradle
-        sed -i 's/targetSdk = .*/targetSdk = 36/' $GITHUB_WORKSPACE/android/app/build.gradle
-        sed -i 's/minSdk = .*/minSdk = 21/' $GITHUB_WORKSPACE/android/app/build.gradle
+        # Also fix any debug/profile manifests
+        for manifest in android/app/src/debug/AndroidManifest.xml android/app/src/profile/AndroidManifest.xml; do
+          if [ -f "$manifest" ]; then
+            sed -i 's/com.example.xtream_iptv/com.xtream.iptv/g' "$manifest"
+          fi
+        done
 
     - name: Install dependencies
       run: flutter pub get
