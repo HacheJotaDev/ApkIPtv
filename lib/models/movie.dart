@@ -1,3 +1,5 @@
+import '../utils/text_utils.dart';
+
 class Movie {
   final String id;
   final String name;
@@ -32,16 +34,16 @@ class Movie {
   factory Movie.fromXtream(Map<String, dynamic> json, String serverUrl, String username, String password) {
     return Movie(
       id: json['stream_id']?.toString() ?? '',
-      name: json['name']?.toString() ?? 'Sin nombre',
-      categoryId: json['category_id']?.toString() ?? '',
+      name: TextUtils.cleanText(json['name']?.toString()) ?? 'Sin nombre',
+      categoryId: TextUtils.cleanText(json['category_id']?.toString()) ?? '',
       streamUrl: '$serverUrl/movie/$username/$password/${json['stream_id']}.${json['container_extension'] ?? 'mp4'}',
       logo: json['stream_icon']?.toString() ?? '',
       rating: json['rating']?.toString() ?? '',
-      description: json['plot']?.toString() ?? '',
+      description: TextUtils.cleanText(json['plot']?.toString()) ?? '',
       releaseDate: json['releasedate']?.toString() ?? '',
-      genre: json['genre']?.toString() ?? '',
-      director: json['director']?.toString() ?? '',
-      cast: json['cast']?.toString() ?? '',
+      genre: TextUtils.cleanText(json['genre']?.toString()) ?? '',
+      director: TextUtils.cleanText(json['director']?.toString()) ?? '',
+      cast: TextUtils.cleanText(json['cast']?.toString()) ?? '',
       duration: json['duration']?.toString() ?? '',
       containerExtension: json['container_extension']?.toString() ?? 'mp4',
     );
@@ -50,8 +52,8 @@ class Movie {
   factory Movie.fromM3u(Map<String, dynamic> data) {
     return Movie(
       id: data['id']?.toString() ?? '',
-      name: data['name']?.toString() ?? 'Sin nombre',
-      categoryId: data['group']?.toString() ?? '',
+      name: TextUtils.cleanText(data['name']?.toString()) ?? 'Sin nombre',
+      categoryId: TextUtils.cleanText(data['group']?.toString()) ?? '',
       streamUrl: data['url']?.toString() ?? '',
       logo: data['logo']?.toString() ?? '',
     );

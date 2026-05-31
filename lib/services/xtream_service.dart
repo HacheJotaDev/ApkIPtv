@@ -52,6 +52,16 @@ class XtreamService {
     }
   }
 
+  /// Safely decode JSON response handling encoding issues
+  dynamic _safeJsonDecode(String body) {
+    String cleanBody = body.trim();
+    // Remove BOM if present
+    if (cleanBody.startsWith('\uFEFF')) {
+      cleanBody = cleanBody.substring(1);
+    }
+    return json.decode(cleanBody);
+  }
+
   Future<Map<String, dynamic>?> authenticate(XtreamCredentials creds) async {
     try {
       final url = Uri.parse(creds.authUrl);
@@ -64,7 +74,7 @@ class XtreamService {
         final body = response.body.trim();
         if (body.isEmpty) return null;
 
-        final data = json.decode(body);
+        final data = _safeJsonDecode(body);
         if (data is Map<String, dynamic>) {
           if (data['user_info'] != null && data['user_info']['auth'] == 1) {
             return data;
@@ -101,7 +111,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return [];
-        final List<dynamic> data = json.decode(body);
+        final List<dynamic> data = _safeJsonDecode(body);
         return data.map((e) => Category.fromJson(e, type: 'live')).toList();
       }
       return [];
@@ -124,7 +134,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return [];
-        final List<dynamic> data = json.decode(body);
+        final List<dynamic> data = _safeJsonDecode(body);
         var channels = data.map((e) => Channel.fromXtream(e, creds.baseUrl, creds.username, creds.password)).toList();
         return channels;
       }
@@ -144,7 +154,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return [];
-        final List<dynamic> data = json.decode(body);
+        final List<dynamic> data = _safeJsonDecode(body);
         return data.map((e) => Category.fromJson(e, type: 'vod')).toList();
       }
       return [];
@@ -167,7 +177,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return [];
-        final List<dynamic> data = json.decode(body);
+        final List<dynamic> data = _safeJsonDecode(body);
         var movies = data.map((e) => Movie.fromXtream(e, creds.baseUrl, creds.username, creds.password)).toList();
         return movies;
       }
@@ -187,7 +197,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return [];
-        final List<dynamic> data = json.decode(body);
+        final List<dynamic> data = _safeJsonDecode(body);
         return data.map((e) => Category.fromJson(e, type: 'series')).toList();
       }
       return [];
@@ -210,7 +220,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return [];
-        final List<dynamic> data = json.decode(body);
+        final List<dynamic> data = _safeJsonDecode(body);
         var seriesList = data.map((e) => Series.fromXtream(e)).toList();
         return seriesList;
       }
@@ -230,7 +240,7 @@ class XtreamService {
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.isEmpty) return null;
-        final data = json.decode(body);
+        final data = _safeJsonDecode(body);
         final seriesData = data['info'] ?? {};
         final episodesData = data['episodes'] ?? {};
 
@@ -273,7 +283,14 @@ class XtreamService {
       }).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
-        final body = response.body;
+        // Decode the bytes as UTF-8 to handle encoding properly
+        String body;
+        try {
+          body = utf8.decode(response.bodyBytes, allowMalformed: true);
+        } catch (_) {
+          body = response.body;
+        }
+
         if (body.trim().isEmpty) return null;
         return body;
       }

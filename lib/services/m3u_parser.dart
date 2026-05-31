@@ -1,6 +1,7 @@
 import '../models/channel.dart';
 import '../models/movie.dart';
 import '../models/category.dart';
+import '../utils/text_utils.dart';
 
 class M3uParser {
   static Map<String, dynamic> parseM3u(String content) {
@@ -28,9 +29,9 @@ class M3uParser {
       final line = lines[i].trim();
 
       if (line.startsWith('#EXTINF:')) {
-        currentName = _extractAttribute(line, ',') ?? 'Sin nombre';
+        currentName = TextUtils.cleanText(_extractAttribute(line, ',') ?? 'Sin nombre');
         currentLogo = _extractAttribute(line, 'tvg-logo="');
-        currentGroup = _extractAttribute(line, 'group-title="');
+        currentGroup = TextUtils.cleanText(_extractAttribute(line, 'group-title="'));
         currentId = _extractAttribute(line, 'tvg-id="');
 
         if (currentGroup != null && currentGroup.isNotEmpty && !seenCategories.contains(currentGroup)) {
@@ -104,7 +105,7 @@ class M3uParser {
         lower.endsWith('.avi') ||
         lower.endsWith('.flv') ||
         lower.endsWith('.mov') ||
-        lower.endsWith('.ts') && lower.contains('/movie/');
+        (lower.endsWith('.ts') && lower.contains('/movie/'));
   }
 
   static bool _isVodGroup(String group) {

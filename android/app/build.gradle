@@ -23,9 +23,8 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.xtream.iptv"
-    compileSdk 36
-    ndkVersion "28.0.13004108"
+    namespace "com.hj.xtream.iptv"
+    compileSdk 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -41,9 +40,9 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.xtream.iptv"
+        applicationId "com.hj.xtream.iptv"
         minSdk 21
-        targetSdk 36
+        targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

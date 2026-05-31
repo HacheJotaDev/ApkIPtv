@@ -1,3 +1,5 @@
+import '../utils/text_utils.dart';
+
 class Channel {
   final String id;
   final String name;
@@ -20,8 +22,8 @@ class Channel {
   factory Channel.fromXtream(Map<String, dynamic> json, String serverUrl, String username, String password) {
     return Channel(
       id: json['stream_id']?.toString() ?? '',
-      name: json['name']?.toString() ?? 'Sin nombre',
-      categoryId: json['category_id']?.toString() ?? '',
+      name: TextUtils.cleanText(json['name']?.toString()) ?? 'Sin nombre',
+      categoryId: TextUtils.cleanText(json['category_id']?.toString()) ?? '',
       streamUrl: '$serverUrl/live/$username/$password/${json['stream_id']}.m3u8',
       logo: json['stream_icon']?.toString() ?? '',
       epgChannelId: json['epg_channel_id']?.toString() ?? '',
@@ -32,8 +34,8 @@ class Channel {
   factory Channel.fromM3u(Map<String, dynamic> data) {
     return Channel(
       id: data['id']?.toString() ?? '',
-      name: data['name']?.toString() ?? 'Sin nombre',
-      categoryId: data['group']?.toString() ?? '',
+      name: TextUtils.cleanText(data['name']?.toString()) ?? 'Sin nombre',
+      categoryId: TextUtils.cleanText(data['group']?.toString()) ?? '',
       streamUrl: data['url']?.toString() ?? '',
       logo: data['logo']?.toString() ?? '',
       streamType: 'live',

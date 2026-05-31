@@ -1,3 +1,5 @@
+import '../utils/text_utils.dart';
+
 class Series {
   final String id;
   final String name;
@@ -26,15 +28,15 @@ class Series {
   factory Series.fromXtream(Map<String, dynamic> json) {
     return Series(
       id: json['series_id']?.toString() ?? '',
-      name: json['name']?.toString() ?? 'Sin nombre',
-      categoryId: json['category_id']?.toString() ?? '',
+      name: TextUtils.cleanText(json['name']?.toString()) ?? 'Sin nombre',
+      categoryId: TextUtils.cleanText(json['category_id']?.toString()) ?? '',
       logo: json['cover']?.toString() ?? '',
       rating: json['rating']?.toString() ?? '',
-      description: json['plot']?.toString() ?? '',
+      description: TextUtils.cleanText(json['plot']?.toString()) ?? '',
       releaseDate: json['releaseDate']?.toString() ?? '',
-      genre: json['genre']?.toString() ?? '',
-      cast: json['cast']?.toString() ?? '',
-      director: json['director']?.toString() ?? '',
+      genre: TextUtils.cleanText(json['genre']?.toString()) ?? '',
+      cast: TextUtils.cleanText(json['cast']?.toString()) ?? '',
+      director: TextUtils.cleanText(json['director']?.toString()) ?? '',
     );
   }
 }
@@ -59,7 +61,7 @@ class SeriesEpisode {
   factory SeriesEpisode.fromXtream(Map<String, dynamic> json, String serverUrl, String username, String password) {
     return SeriesEpisode(
       id: json['id']?.toString() ?? '',
-      name: json['title']?.toString() ?? 'Episodio',
+      name: TextUtils.cleanText(json['title']?.toString()) ?? 'Episodio',
       episodeNum: json['episode_num']?.toString() ?? '',
       seasonNum: json['season_num']?.toString() ?? '',
       streamUrl: '$serverUrl/series/$username/$password/${json['id']}.${json['container_extension'] ?? 'mp4'}',
