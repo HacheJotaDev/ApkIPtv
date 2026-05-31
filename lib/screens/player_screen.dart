@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit/src/player/native_player.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -156,18 +155,20 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     return 'Error al reproducir. Intenta reintentar.';
   }
 
-  /// Set MPV properties for HLS live streams via NativePlayer
+  /// Set MPV properties for HLS live streams via platform player
   void _setLiveStreamProperties() {
     try {
-      if (_player.platform is NativePlayer) {
-        final nativePlayer = _player.platform as NativePlayer;
-        nativePlayer.setProperty('force-seekable', 'no');
-        nativePlayer.setProperty('cache', 'yes');
-        nativePlayer.setProperty('demux-max-bytes', '100MiB');
-        nativePlayer.setProperty('demux-max-back-bytes', '50MiB');
+      final platform = _player.platform;
+      if (platform != null) {
+        // Use dynamic to access NativePlayer.setProperty without importing
+        // the private class. At runtime on Android, platform IS NativePlayer.
+        (platform as dynamic).setProperty('force-seekable', 'no');
+        (platform as dynamic).setProperty('cache', 'yes');
+        (platform as dynamic).setProperty('demux-max-bytes', '100MiB');
+        (platform as dynamic).setProperty('demux-max-back-bytes', '50MiB');
         debugPrint('Live stream MPV properties set successfully');
       } else {
-        debugPrint('NativePlayer not available, cannot set MPV properties');
+        debugPrint('Platform player not available, cannot set MPV properties');
       }
     } catch (e) {
       debugPrint('MPV property set error (non-fatal): $e');
