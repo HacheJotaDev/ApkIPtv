@@ -25,6 +25,11 @@ jobs:
       with:
         channel: 'stable'
 
+    - name: Accept Android SDK licenses
+      run: |
+        yes | sdkmanager --licenses 2>/dev/null || true
+        sdkmanager --install "ndk;27.0.12077973" 2>/dev/null || true
+
     - name: Ensure assets directory exists
       run: mkdir -p assets
 
