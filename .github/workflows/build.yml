@@ -64,7 +64,10 @@ jobs:
 
     - name: Fix Gradle for third-party plugin compatibility
       run: |
-        KOTLIN_VERSION=$(grep 'org.jetbrains.kotlin.android' android/settings.gradle | sed -E "s/.*version '([^']+)'.*/\1/")
+        KOTLIN_VERSION=$(grep 'org.jetbrains.kotlin.android' android/settings.gradle | sed -nE "s/.*version ['\"]([^'\"]+)['\"].*/\1/p")
+        if [ -z "$KOTLIN_VERSION" ]; then
+          KOTLIN_VERSION="2.0.21"
+        fi
         echo "Detected Kotlin version: $KOTLIN_VERSION"
         {
           echo "buildscript {"
