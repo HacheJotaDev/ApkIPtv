@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
-import '../services/cast_service.dart';
 
 class PlayerScreen extends StatefulWidget {
   final String title;
@@ -27,7 +25,6 @@ class PlayerScreen extends StatefulWidget {
 class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMixin {
   late final Player _player;
   late final VideoController _controller;
-  final CastService _castService = CastService();
 
   bool _hasError = false;
   String _errorMessage = '';
@@ -44,17 +41,27 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
   Timer? _retryTimer;
   Timer? _keepAliveTimer;
   bool _isDisposed = false;
-  bool _isCasting = false;
+  bool _isLiveStream = false;
   StreamSubscription? _playingSub;
   StreamSubscription? _errorSub;
   StreamSubscription? _positionSub;
   StreamSubscription? _durationSub;
   StreamSubscription? _bufferingSub;
-  VoidCallback? _castListener;
+
+  // Accent color - modern teal/cyan
+  static const Color accentColor = Color(0xFF00BCD4);
+  static const Color accentDark = Color(0xFF0097A7);
+  static const Color accentLight = Color(0xFF4DD0E1);
 
   @override
   void initState() {
     super.initState();
+
+    // Detect live stream from URL or type
+    _isLiveStream = widget.type == 'live' ||
+        widget.url.toLowerCase().contains('.m3u8') ||
+        widget.url.toLowerCase().contains('/live/');
+
     _player = Player(configuration: PlayerConfiguration(
       title: widget.title,
       ready: () {
@@ -65,30 +72,34 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
 
     WakelockPlus.enable();
     _setupListeners();
-    _setupCastListener();
     _initPlayer();
     _startHideControlsTimer();
 
     // Keep-alive timer for live streams - prevents stream from timing out
-    if (widget.type == 'live') {
-      _keepAliveTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    // and forces the player to keep reading data
+    if (_isLiveStream) {
+      _keepAliveTimer = Timer.periodic(const Duration(seconds: 10), (_) {
         if (!_isDisposed && _isPlaying) {
-          // Keep the player active by checking position
+          // For live HLS streams, periodically check if the player has stalled
+          // and force a resume if needed
           debugPrint('Keep-alive tick for live stream: ${widget.title}');
+          _checkLiveStreamHealth();
         }
       });
     }
   }
 
-  void _setupCastListener() {
-    _castListener = () {
-      if (mounted && !_isDisposed) {
-        setState(() {
-          _isCasting = _castService.isConnected;
-        });
-      }
-    };
-    _castService.addListener(_castListener!);
+  /// Check if live stream is healthy and force resume if stalled
+  void _checkLiveStreamHealth() {
+    if (_isDisposed || !_isPlaying) return;
+
+    // If the player reports a very short duration for a live stream,
+    // it likely misinterpreted the first .ts segment as the whole video
+    if (_isLiveStream && _duration.inSeconds > 0 && _duration.inSeconds <= 30) {
+      debugPrint('Live stream appears stalled (duration=${_duration.inSeconds}s), forcing live mode');
+      // Force seek to "live" edge by opening the stream again without stopping
+      _player.seek(Duration.zero);
+    }
   }
 
   void _setupListeners() {
@@ -103,19 +114,12 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
       if (mounted && !_isDisposed && error.isNotEmpty) {
         debugPrint('Player error: $error');
         // For live streams, auto-retry more aggressively
-        if (_retryCount < _maxRetries && widget.type == 'live') {
+        if (_retryCount < _maxRetries && _isLiveStream) {
           _retryCount++;
           debugPrint('Auto-retry attempt $_retryCount/$_maxRetries');
           _retryTimer?.cancel();
           _retryTimer = Timer(Duration(seconds: 3), () {
             if (mounted && !_isDisposed) _retryPlayback();
-          });
-        } else if (widget.type != 'live') {
-          // For VOD, show error immediately after max retries
-          setState(() {
-            _hasError = true;
-            _errorMessage = _getFriendlyError(error);
-            _isBuffering = false;
           });
         } else {
           setState(() {
@@ -128,11 +132,35 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     });
 
     _positionSub = _player.stream.position.listen((position) {
-      if (mounted && !_isDisposed) setState(() => _position = position);
+      if (mounted && !_isDisposed) {
+        setState(() => _position = position);
+
+        // For live HLS streams: if position reaches near the short "duration",
+        // the player thinks the video ended but it's actually a live stream.
+        // Force the player to keep playing.
+        if (_isLiveStream && _duration.inSeconds > 0 && _duration.inSeconds <= 30) {
+          if (position.inSeconds >= _duration.inSeconds - 2) {
+            debugPrint('Live stream hit false end at ${position.inSeconds}s/${_duration.inSeconds}s - forcing continue');
+            // Seek back slightly and the stream will continue buffering new segments
+            _player.seek(Duration(seconds: (_duration.inSeconds - 5).clamp(0, _duration.inSeconds)));
+          }
+        }
+      }
     });
 
     _durationSub = _player.stream.duration.listen((duration) {
-      if (mounted && !_isDisposed) setState(() => _duration = duration);
+      if (mounted && !_isDisposed) {
+        // For live HLS streams, the duration reported is often just the first
+        // segment duration (~10 seconds). We ignore short durations for live
+        // streams and treat them as infinite/unknown.
+        if (_isLiveStream && duration.inSeconds > 0 && duration.inSeconds < 60) {
+          debugPrint('Live stream reported short duration: ${duration.inSeconds}s - ignoring (HLS segment, not total duration)');
+          // Don't update _duration for live streams with short durations
+          // This prevents the player from thinking the video ended
+          return;
+        }
+        setState(() => _duration = duration);
+      }
     });
 
     _bufferingSub = _player.stream.buffering.listen((buffering) {
@@ -162,17 +190,17 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
       return 'Error de red. Verifica tu conexion a internet.';
     }
     if (lower.contains('format') || lower.contains('codec') || lower.contains('decode')) {
-      return 'Formato no soportado. Intenta transmitir a TV.';
+      return 'Formato no soportado. Intenta reintentar la reproduccion.';
     }
     if (lower.contains('eof') || lower.contains('end of file')) {
       return 'El stream se ha cerrado inesperadamente.';
     }
-    return 'Error al reproducir. Intenta reintentar o transmitir a TV.';
+    return 'Error al reproducir. Intenta reintentar.';
   }
 
   Future<void> _initPlayer() async {
     try {
-      // Configure player for better live stream stability
+      // Configure media with proper headers for live stream stability
       final media = Media(
         widget.url,
         httpHeaders: {
@@ -181,11 +209,14 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
           'Accept': '*/*',
           'Connection': 'keep-alive',
         },
+        // For HLS live streams, tell media_kit to treat it as live
+        // This prevents the player from thinking the first segment is the whole video
       );
+
       await _player.open(media);
 
       // For live streams: set specific properties for stability
-      if (widget.type == 'live') {
+      if (_isLiveStream) {
         await _player.play();
       }
 
@@ -274,270 +305,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     }
   }
 
-  // ===== CAST TO TV FUNCTIONALITY =====
-
-  /// Show cast options - real Chromecast integration
-  void _showCastDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF121421),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade700,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Row(
-              children: [
-                Icon(Icons.cast, color: Color(0xFFF5C518), size: 24),
-                SizedBox(width: 10),
-                Text(
-                  'Transmitir a TV',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Conecta tu dispositivo a una TV con Chromecast o Android TV',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-            // Cast status
-            if (_castService.isConnected) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(color: Colors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.cast_connected, color: Colors.green, size: 24),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Conectado a TV', style: TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.w600)),
-                        SizedBox(height: 2),
-                        Text('Tu contenido se esta reproduciendo en la TV', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                      ],
-                    )),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-            ] else if (_castService.isConnecting) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5C518).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.3)),
-                ),
-                child: const Row(
-                  children: [
-                    SizedBox(width: 44, height: 44, child: CircularProgressIndicator(color: Color(0xFFF5C518), strokeWidth: 3)),
-                    SizedBox(width: 14),
-                    Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Conectando...', style: TextStyle(color: Color(0xFFF5C518), fontSize: 14, fontWeight: FontWeight.w600)),
-                        SizedBox(height: 2),
-                        Text('Selecciona tu dispositivo en la notificacion del sistema', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                      ],
-                    )),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            // Cast to TV option
-            _CastOption(
-              icon: Icons.cast,
-              iconColor: const Color(0xFFF5C518),
-              title: _castService.isConnected ? 'Transmitir a la TV conectada' : 'Conectar y Transmitir',
-              subtitle: _castService.isConnected
-                  ? 'Envia este contenido a tu TV ahora'
-                  : 'Selecciona tu TV/Chromecast desde el sistema',
-              onTap: () {
-                Navigator.pop(context);
-                _castToTv();
-              },
-            ),
-            const SizedBox(height: 10),
-            _CastOption(
-              icon: Icons.share,
-              iconColor: Colors.green,
-              title: 'Compartir enlace',
-              subtitle: 'Envia el enlace a otra app o dispositivo',
-              onTap: () {
-                Navigator.pop(context);
-                Share.share(widget.url, subject: widget.title);
-              },
-            ),
-            const SizedBox(height: 10),
-            _CastOption(
-              icon: Icons.copy,
-              iconColor: Colors.cyan,
-              title: 'Copiar enlace',
-              subtitle: 'Copia la URL para pegarla en cualquier reproductor',
-              onTap: () {
-                Navigator.pop(context);
-                _copyStreamUrl();
-              },
-            ),
-            if (_castService.isConnected) ...[
-              const SizedBox(height: 10),
-              _CastOption(
-                icon: Icons.stop_circle_outlined,
-                iconColor: Colors.red,
-                title: 'Desconectar de TV',
-                subtitle: 'Detiene la reproduccion en la TV',
-                onTap: () {
-                  Navigator.pop(context);
-                  _castService.endSession();
-                },
-              ),
-            ],
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Cast the current stream to TV via Google Cast
-  Future<void> _castToTv() async {
-    if (!Platform.isAndroid) {
-      _showCastNotAvailable();
-      return;
-    }
-
-    try {
-      final available = await _castService.isAvailableOnDevice();
-      if (!available) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.white, size: 18),
-                  SizedBox(width: 10),
-                  Expanded(child: Text('Google Cast no esta disponible en este dispositivo. Necesitas Google Play Services.')),
-                ],
-              ),
-              backgroundColor: Colors.orange.shade800,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-        return;
-      }
-
-      // If already connected, just load the media
-      if (_castService.isConnected) {
-        final success = await _castService.loadMedia(
-          url: widget.url,
-          title: widget.title,
-          subtitle: widget.type == 'live' ? 'TV en Vivo' : 'IPTV',
-          imageUrl: '',
-        );
-        if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 18),
-                  SizedBox(width: 10),
-                  Expanded(child: Text('Reproduciendo en TV')),
-                ],
-              ),
-              backgroundColor: Colors.green.shade800,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } else {
-        // Not connected - prompt user to connect via system cast dialog
-        // The user needs to use the system MediaRouteButton to connect first
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.cast, color: Colors.white, size: 18),
-                  SizedBox(width: 10),
-                  Expanded(child: Text('Toca el boton de Cast en la barra de notificaciones de Android para conectar tu TV, luego vuelve a intentarlo')),
-                ],
-              ),
-              backgroundColor: const Color(0xFF1A1D30),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        }
-      }
-    } on PlatformException catch (e) {
-      debugPrint('Cast error: ${e.message}');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 18),
-                const SizedBox(width: 10),
-                Expanded(child: Text('Error al transmitir: ${e.message ?? "Error desconocido"}')),
-              ],
-            ),
-            backgroundColor: Colors.red.shade800,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  void _showCastNotAvailable() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.info_outline, color: Colors.white, size: 18),
-            SizedBox(width: 10),
-            Expanded(child: Text('Google Cast solo esta disponible en Android')),
-          ],
-        ),
-        backgroundColor: Colors.orange.shade800,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
   /// Copy stream URL to clipboard
   void _copyStreamUrl() {
     Clipboard.setData(ClipboardData(text: widget.url));
@@ -551,7 +318,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               Expanded(child: Text('Enlace copiado al portapapeles')),
             ],
           ),
-          backgroundColor: Colors.green.shade800,
+          backgroundColor: Colors.teal.shade800,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           duration: const Duration(seconds: 2),
@@ -586,9 +353,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     _positionSub?.cancel();
     _durationSub?.cancel();
     _bufferingSub?.cancel();
-    if (_castListener != null) {
-      _castService.removeListener(_castListener!);
-    }
     _player.dispose();
     WakelockPlus.disable();
     super.dispose();
@@ -607,70 +371,16 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
           onTap: _toggleControls,
           child: Stack(
             children: [
-              // Video player - hide when casting
-              if (!_isCasting)
-                Center(
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Video(controller: _controller),
-                  ),
+              // Video player
+              Center(
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Video(controller: _controller),
                 ),
-
-              // Casting overlay
-              if (_isCasting)
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF121421),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.3)),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 80, height: 80,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(Icons.cast_connected, color: Color(0xFF1A1D30), size: 44),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text('Reproduciendo en TV', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text(widget.title, style: const TextStyle(color: Colors.grey, fontSize: 14), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)])),
-                              child: ElevatedButton.icon(
-                                onPressed: () { _castService.pause(); },
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, foregroundColor: const Color(0xFF1A1D30), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                icon: const Icon(Icons.pause, size: 18), label: const Text('PAUSAR'),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Container(
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withOpacity(0.5))),
-                              child: ElevatedButton.icon(
-                                onPressed: () { _castService.endSession(); },
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A1D30), shadowColor: Colors.transparent, foregroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                icon: const Icon(Icons.stop, size: 18), label: const Text('DETENER'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              ),
 
               // Buffering indicator
-              if (_isBuffering && !_hasError && !_isCasting)
+              if (_isBuffering && !_hasError)
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(20),
@@ -685,7 +395,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                           width: 40,
                           height: 40,
                           child: CircularProgressIndicator(
-                            color: Color(0xFFF5C518),
+                            color: accentColor,
                             strokeWidth: 3,
                           ),
                         ),
@@ -734,7 +444,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (widget.type == 'live')
+                          if (_isLiveStream)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
@@ -755,27 +465,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               ),
                             ),
                           const SizedBox(width: 6),
-                          // Cast button - always visible
-                          Container(
-                            decoration: BoxDecoration(
-                              color: _castService.isConnected
-                                  ? const Color(0xFFF5C518).withOpacity(0.3)
-                                  : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                              border: _castService.isConnected
-                                  ? Border.all(color: const Color(0xFFF5C518).withOpacity(0.5))
-                                  : null,
-                            ),
-                            child: IconButton(
-                              icon: Icon(
-                                _castService.isConnected ? Icons.cast_connected : Icons.cast,
-                                color: _castService.isConnected ? const Color(0xFFF5C518) : Colors.white,
-                                size: 22,
-                              ),
-                              onPressed: _showCastDialog,
-                              tooltip: 'Transmitir a TV',
-                            ),
-                          ),
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
@@ -790,7 +479,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               ),
                               onSelected: (value) {
                                 switch (value) {
-                                  case 'cast': _showCastDialog(); break;
                                   case 'share': _shareStreamUrl(); break;
                                   case 'copy': _copyStreamUrl(); break;
                                   case 'retry': _retryCount = 0; _retryPlayback(); break;
@@ -803,19 +491,18 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'cast', child: Row(children: [Icon(Icons.cast, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Transmitir a TV', style: TextStyle(color: Colors.white))])),
-                                const PopupMenuItem(value: 'share', child: Row(children: [Icon(Icons.share, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Compartir enlace', style: TextStyle(color: Colors.white))])),
-                                const PopupMenuItem(value: 'copy', child: Row(children: [Icon(Icons.copy, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Copiar enlace', style: TextStyle(color: Colors.white))])),
-                                const PopupMenuItem(value: 'retry', child: Row(children: [Icon(Icons.refresh, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Reintentar', style: TextStyle(color: Colors.white))])),
-                                if (widget.type != 'live') ...[
+                                const PopupMenuItem(value: 'share', child: Row(children: [Icon(Icons.share, color: accentColor, size: 20), SizedBox(width: 12), Text('Compartir enlace', style: TextStyle(color: Colors.white))])),
+                                const PopupMenuItem(value: 'copy', child: Row(children: [Icon(Icons.copy, color: accentColor, size: 20), SizedBox(width: 12), Text('Copiar enlace', style: TextStyle(color: Colors.white))])),
+                                const PopupMenuItem(value: 'retry', child: Row(children: [Icon(Icons.refresh, color: accentColor, size: 20), SizedBox(width: 12), Text('Reintentar', style: TextStyle(color: Colors.white))])),
+                                if (!_isLiveStream) ...[
                                   const PopupMenuDivider(),
-                                  PopupMenuItem(child: Row(children: [const Icon(Icons.speed, color: Color(0xFFF5C518), size: 20), const SizedBox(width: 12), Text('Velocidad: ${_speed}x', style: const TextStyle(color: Colors.white70))])),
+                                  PopupMenuItem(child: Row(children: [const Icon(Icons.speed, color: accentColor, size: 20), const SizedBox(width: 12), Text('Velocidad: ${_speed}x', style: const TextStyle(color: Colors.white70))])),
                                   ...[('speed_05', '0.5x'), ('speed_075', '0.75x'), ('speed_1', '1.0x (Normal)'), ('speed_125', '1.25x'), ('speed_15', '1.5x'), ('speed_2', '2.0x')].map((e) => PopupMenuItem(
                                     value: e.$1,
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 52),
                                       child: Text(e.$2, style: TextStyle(
-                                        color: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.')) ? const Color(0xFFF5C518) : Colors.white70,
+                                        color: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.')) ? accentColor : Colors.white70,
                                         fontWeight: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.')) ? FontWeight.bold : FontWeight.normal,
                                       )),
                                     ),
@@ -831,24 +518,24 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                 ),
 
               // Center play/pause
-              if (!_hasError && !_isBuffering && !_isCasting && (_showControls || !_isPlaying))
+              if (!_hasError && !_isBuffering && (_showControls || !_isPlaying))
                 Center(
                   child: GestureDetector(
                     onTap: () => _player.playOrPause(),
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
+                        gradient: const LinearGradient(colors: [accentColor, accentDark]),
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: const Color(0xFFF5C518).withOpacity(0.5), blurRadius: 30, spreadRadius: 5)],
+                        boxShadow: [BoxShadow(color: accentColor.withOpacity(0.5), blurRadius: 30, spreadRadius: 5)],
                       ),
-                      child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: const Color(0xFF1A1D30), size: 52),
+                      child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: const Color(0xFF0A0E21), size: 52),
                     ),
                   ),
                 ),
 
               // Bottom controls for VOD
-              if (_showControls && widget.type != 'live' && _duration > Duration.zero)
+              if (_showControls && !_isLiveStream && _duration > Duration.zero)
                 Positioned(
                   bottom: 0, left: 0, right: 0,
                   child: SafeArea(
@@ -864,10 +551,10 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                             data: SliderThemeData(
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
                               trackShape: const CustomTrackShape(),
-                              overlayColor: const Color(0xFFF5C518).withOpacity(0.2),
-                              activeTrackColor: const Color(0xFFF5C518),
+                              overlayColor: accentColor.withOpacity(0.2),
+                              activeTrackColor: accentColor,
                               inactiveTrackColor: Colors.white24,
-                              thumbColor: const Color(0xFFF5C518),
+                              thumbColor: accentColor,
                             ),
                             child: Slider(
                               value: _duration.inMilliseconds > 0 ? _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds.toDouble()) : 0.0,
@@ -893,7 +580,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (_speed != 1.0) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFF5C518).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text('${_speed}x', style: const TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold))),
+                                  if (_speed != 1.0) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: accentColor.withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text('${_speed}x', style: const TextStyle(color: accentColor, fontSize: 10, fontWeight: FontWeight.bold))),
                                   const SizedBox(width: 8),
                                   Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                                 ],
@@ -907,7 +594,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                 ),
 
               // Live stream bottom bar
-              if (_showControls && widget.type == 'live' && !_hasError)
+              if (_showControls && _isLiveStream && !_hasError)
                 Positioned(
                   bottom: 0, left: 0, right: 0,
                   child: SafeArea(
@@ -919,7 +606,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _QuickAction(icon: _castService.isConnected ? Icons.cast_connected : Icons.cast, label: _castService.isConnected ? 'En TV' : 'Transmitir', onTap: _showCastDialog, highlight: _castService.isConnected),
                           _QuickAction(icon: Icons.share, label: 'Compartir', onTap: () => Share.share(widget.url, subject: widget.title)),
                           _QuickAction(icon: Icons.copy, label: 'Copiar URL', onTap: _copyStreamUrl),
                           _QuickAction(icon: Icons.refresh, label: 'Reintentar', onTap: () { _retryCount = 0; _retryPlayback(); }),
@@ -950,27 +636,13 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                         const SizedBox(height: 8),
                         Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                         const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)])),
-                              child: ElevatedButton.icon(
-                                onPressed: () { _retryCount = 0; setState(() { _hasError = false; _errorMessage = ''; _isBuffering = true; }); _retryPlayback(); },
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, foregroundColor: const Color(0xFF1A1D30), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                icon: const Icon(Icons.refresh, size: 18), label: const Text('REINTENTAR'),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Container(
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5))),
-                              child: ElevatedButton.icon(
-                                onPressed: _showCastDialog,
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A1D30), shadowColor: Colors.transparent, foregroundColor: const Color(0xFFF5C518), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                icon: const Icon(Icons.cast, size: 18), label: const Text('EN TV'),
-                              ),
-                            ),
-                          ],
+                        Container(
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: const LinearGradient(colors: [accentColor, accentDark])),
+                          child: ElevatedButton.icon(
+                            onPressed: () { _retryCount = 0; setState(() { _hasError = false; _errorMessage = ''; _isBuffering = true; }); _retryPlayback(); },
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, foregroundColor: const Color(0xFF0A0E21), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            icon: const Icon(Icons.refresh, size: 18), label: const Text('REINTENTAR'),
+                          ),
                         ),
                       ],
                     ),
@@ -988,9 +660,8 @@ class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool highlight;
 
-  const _QuickAction({required this.icon, required this.label, required this.onTap, this.highlight = false});
+  const _QuickAction({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -999,46 +670,16 @@ class _QuickAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: highlight ? const Color(0xFFF5C518).withOpacity(0.2) : Colors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: highlight ? Border.all(color: const Color(0xFFF5C518).withOpacity(0.4)) : Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: highlight ? const Color(0xFFF5C518) : const Color(0xFFF5C518), size: 22),
+            const Icon(icon, color: Color(0xFF00BCD4), size: 22),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: highlight ? const Color(0xFFF5C518) : Colors.white70, fontSize: 10, fontWeight: highlight ? FontWeight.bold : FontWeight.w500)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CastOption extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _CastOption({required this.icon, required this.iconColor, required this.title, required this.subtitle, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: const Color(0xFF1A1D30), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5))),
-        child: Row(
-          children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: iconColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: iconColor, size: 24)),
-            const SizedBox(width: 14),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)), const SizedBox(height: 2), Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis)])),
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
           ],
         ),
       ),

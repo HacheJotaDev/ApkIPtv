@@ -37,12 +37,12 @@ class SettingsScreen extends StatelessWidget {
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5C518).withOpacity(0.15),
+                      color: const Color(0xFF00BCD4).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
                       'ACTIVO',
-                      style: TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Color(0xFF00BCD4), fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -80,12 +80,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5C518).withOpacity(0.15),
+                    color: const Color(0xFF00BCD4).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.liveCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFFF5C518), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -96,12 +96,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5C518).withOpacity(0.15),
+                    color: const Color(0xFF00BCD4).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.vodCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFFF5C518), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -112,12 +112,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5C518).withOpacity(0.15),
+                    color: const Color(0xFF00BCD4).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.seriesCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFFF5C518), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -174,26 +174,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              _SettingsTile(
-                icon: Icons.cast_outlined,
-                title: 'Transmision a TV',
-                subtitle: 'Usa el boton de cast en el reproductor',
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5C518).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.cast, color: Color(0xFFF5C518), size: 14),
-                      SizedBox(width: 4),
-                      Text('DISPONIBLE', style: TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
+
             ],
           ),
 
@@ -214,7 +195,7 @@ class SettingsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFF5C518).withOpacity(0.3),
+                            color: const Color(0xFF00BCD4).withOpacity(0.3),
                             blurRadius: 20,
                             spreadRadius: 3,
                           ),
@@ -227,7 +208,7 @@ class SettingsScreen extends StatelessWidget {
                           return Container(
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                                colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)],
                               ),
                               borderRadius: BorderRadius.all(Radius.circular(22)),
                             ),
@@ -239,7 +220,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 14),
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                        colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)],
                       ).createShader(bounds),
                       child: const Text(
                         'HacheJota',
@@ -305,18 +286,18 @@ class SettingsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5C518).withOpacity(0.1),
+                        color: const Color(0xFF00BCD4).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.2)),
+                        border: Border.all(color: const Color(0xFF00BCD4).withOpacity(0.2)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.favorite, color: Color(0xFFF5C518), size: 14),
+                          Icon(Icons.favorite, color: Color(0xFF00BCD4), size: 14),
                           SizedBox(width: 6),
                           Text(
                             'Hecho con dedicacion',
-                            style: TextStyle(color: Color(0xFFF5C518), fontSize: 12),
+                            style: TextStyle(color: Color(0xFF00BCD4), fontSize: 12),
                           ),
                         ],
                       ),
@@ -429,12 +410,12 @@ class _ProfileHeader extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
+                colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
               ),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFF5C518).withOpacity(0.3),
+                  color: const Color(0xFF00BCD4).withOpacity(0.3),
                   blurRadius: 10,
                 ),
               ],
@@ -477,7 +458,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFFF5C518),
+          color: Color(0xFF00BCD4),
           fontSize: 14,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
@@ -524,10 +505,10 @@ class _SettingsTile extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: const Color(0xFFF5C518).withOpacity(0.1),
+          color: const Color(0xFF00BCD4).withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: const Color(0xFFF5C518), size: 20),
+        child: Icon(icon, color: const Color(0xFF00BCD4), size: 20),
       ),
       title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),

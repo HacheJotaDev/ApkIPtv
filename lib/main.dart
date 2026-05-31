@@ -75,16 +75,16 @@ void main() async {
 class XtreamIPTVApp extends StatelessWidget {
   const XtreamIPTVApp({super.key});
 
-  // HacheJota color palette - Gold & Navy
-  static const Color primaryGold = Color(0xFFF5C518);
-  static const Color lightGold = Color(0xFFFFD700);
-  static const Color darkGold = Color(0xFFE5A000);
-  static const Color darkBg = Color(0xFF0C0E1A);
-  static const Color surfaceBg = Color(0xFF121421);
-  static const Color cardBg = Color(0xFF1A1D30);
-  static const Color inputBg = Color(0xFF131630);
-  static const Color borderClr = Color(0xFF2A2D4A);
-  static const Color gradientMid = Color(0xFF161830);
+  // XTREAM IPTV color palette - Teal & Navy
+  static const Color primaryGold = Color(0xFF00BCD4);
+  static const Color lightGold = Color(0xFF4DD0E1);
+  static const Color darkGold = Color(0xFF0097A7);
+  static const Color darkBg = Color(0xFF0A0E1A);
+  static const Color surfaceBg = Color(0xFF0F1320);
+  static const Color cardBg = Color(0xFF161A2E);
+  static const Color inputBg = Color(0xFF111528);
+  static const Color borderClr = Color(0xFF1E2340);
+  static const Color gradientMid = Color(0xFF121630);
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +92,7 @@ class XtreamIPTVApp extends StatelessWidget {
       title: 'XTREAM IPTV',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.amber,
+        primarySwatch: Colors.teal,
         brightness: Brightness.dark,
         scaffoldBackgroundColor: darkBg,
         appBarTheme: const AppBarTheme(

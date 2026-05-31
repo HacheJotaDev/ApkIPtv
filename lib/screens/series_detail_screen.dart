@@ -55,12 +55,12 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
                             color: const Color(0xFF1A1D30),
-                            child: const Icon(Icons.tv, size: 64, color: Color(0xFFF5C518)),
+                            child: const Icon(Icons.tv, size: 64, color: Color(0xFF00BCD4)),
                           ),
                         )
                       : Container(
                           color: const Color(0xFF1A1D30),
-                          child: const Icon(Icons.tv, size: 64, color: Color(0xFFF5C518)),
+                          child: const Icon(Icons.tv, size: 64, color: Color(0xFF00BCD4)),
                         ),
                   Container(
                     decoration: const BoxDecoration(
@@ -99,9 +99,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                       runSpacing: 8,
                       children: [
                         if (widget.series.rating.isNotEmpty)
-                          _InfoChip(icon: Icons.star, label: widget.series.rating, color: const Color(0xFFF5C518)),
+                          _InfoChip(icon: Icons.star, label: widget.series.rating, color: const Color(0xFF00BCD4)),
                         if (widget.series.releaseDate.isNotEmpty)
-                          _InfoChip(icon: Icons.calendar_today, label: widget.series.releaseDate, color: const Color(0xFFF5C518)),
+                          _InfoChip(icon: Icons.calendar_today, label: widget.series.releaseDate, color: const Color(0xFF00BCD4)),
                         if (widget.series.genre.isNotEmpty)
                           _InfoChip(icon: Icons.category, label: widget.series.genre, color: Colors.purple),
                       ],
@@ -127,7 +127,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
 
                     // Episodes section
                     if (_isLoading)
-                      const Center(child: SpinKitThreeBounce(color: Color(0xFFF5C518), size: 24))
+                      const Center(child: SpinKitThreeBounce(color: Color(0xFF00BCD4), size: 24))
                     else if (_seriesInfo != null && _seriesInfo!.seasons.isNotEmpty) ...[
                       Row(
                         children: [
@@ -136,12 +136,12 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5C518).withOpacity(0.15),
+                              color: const Color(0xFF00BCD4).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               '${_seriesInfo!.seasons.length}',
-                              style: const TextStyle(color: Color(0xFFF5C518), fontSize: 12, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -162,10 +162,10 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                                 label: Text('T$seasonNum'),
                                 selected: isSelected,
                                 onSelected: (_) => setState(() => _selectedSeason = int.parse(seasonNum)),
-                                selectedColor: const Color(0xFFF5C518),
+                                selectedColor: const Color(0xFF00BCD4),
                                 backgroundColor: const Color(0xFF1A1D30),
                                 side: BorderSide(
-                                  color: isSelected ? const Color(0xFFF5C518) : const Color(0xFF2A2D4A),
+                                  color: isSelected ? const Color(0xFF00BCD4) : const Color(0xFF2A2D4A),
                                 ),
                                 labelStyle: TextStyle(
                                   color: isSelected ? const Color(0xFF1A1D30) : Colors.white,
@@ -250,7 +250,7 @@ class _EpisodeTile extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
+                  gradient: const LinearGradient(colors: [Color(0xFF00BCD4), Color(0xFF0097A7)]),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.play_circle, color: Color(0xFF1A1D30), size: 24),
@@ -273,7 +273,7 @@ class _EpisodeTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.play_arrow, color: Color(0xFFF5C518)),
+              const Icon(Icons.play_arrow, color: Color(0xFF00BCD4)),
             ],
           ),
         ),

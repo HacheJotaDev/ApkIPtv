@@ -29,7 +29,7 @@ jobs:
       run: yes | sdkmanager --licenses 2>/dev/null || true
 
     - name: Install Android SDK platforms and build tools
-      run: sdkmanager --install "platforms;android-36" "build-tools;34.0.0" "ndk;28.2.13676358" 2>/dev/null || true
+      run: sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "ndk;28.2.13676358" 2>/dev/null || true
 
     - name: Ensure assets directory exists
       run: mkdir -p assets/images

@@ -49,12 +49,12 @@ class _MoviesScreenState extends State<MoviesScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5C518).withOpacity(0.2),
+                        color: const Color(0xFF00BCD4).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '${provider.filteredVodMovies.length}',
-                        style: const TextStyle(color: Color(0xFFF5C518), fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                 ],
@@ -85,7 +85,7 @@ class _MoviesScreenState extends State<MoviesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SpinKitThreeBounce(color: Color(0xFFF5C518), size: 24),
+                        SpinKitThreeBounce(color: Color(0xFF00BCD4), size: 24),
                         SizedBox(height: 16),
                         Text('Cargando peliculas...', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
@@ -116,7 +116,7 @@ class _MoviesScreenState extends State<MoviesScreen> {
                       )
                     : RefreshIndicator(
                         onRefresh: () => provider.selectVodCategory(provider.selectedVodCategory),
-                        color: const Color(0xFFF5C518),
+                        color: const Color(0xFF00BCD4),
                         child: GridView.builder(
                           padding: const EdgeInsets.all(12),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -190,16 +190,16 @@ class _MovieCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       placeholder: (_, __) => Container(
                         color: const Color(0xFF131630),
-                        child: const Icon(Icons.movie, color: Color(0xFFF5C518), size: 36),
+                        child: const Icon(Icons.movie, color: Color(0xFF00BCD4), size: 36),
                       ),
                       errorWidget: (_, __, ___) => Container(
                         color: const Color(0xFF131630),
-                        child: const Icon(Icons.movie, color: Color(0xFFF5C518), size: 36),
+                        child: const Icon(Icons.movie, color: Color(0xFF00BCD4), size: 36),
                       ),
                     )
                   : Container(
                       color: const Color(0xFF131630),
-                      child: const Icon(Icons.movie, color: Color(0xFFF5C518), size: 36),
+                      child: const Icon(Icons.movie, color: Color(0xFF00BCD4), size: 36),
                     ),
               // Gradient overlay at bottom
               Positioned(
@@ -228,9 +228,9 @@ class _MovieCard extends StatelessWidget {
                       if (movie.rating.isNotEmpty)
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Color(0xFFF5C518), size: 12),
+                            const Icon(Icons.star, color: Color(0xFF00BCD4), size: 12),
                             const SizedBox(width: 2),
-                            Text(movie.rating, style: const TextStyle(color: Color(0xFFF5C518), fontSize: 10)),
+                            Text(movie.rating, style: const TextStyle(color: Color(0xFF00BCD4), fontSize: 10)),
                           ],
                         ),
                     ],
@@ -243,12 +243,12 @@ class _MovieCard extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
+                      colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF5C518).withOpacity(0.4),
+                        color: const Color(0xFF00BCD4).withOpacity(0.4),
                         blurRadius: 12,
                       ),
                     ],

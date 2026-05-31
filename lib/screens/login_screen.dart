@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFF5C518).withOpacity(0.35),
+                          color: const Color(0xFF00BCD4).withOpacity(0.35),
                           blurRadius: 30,
                           spreadRadius: 3,
                         ),
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         return Container(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                              colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)],
                             ),
                             borderRadius: BorderRadius.circular(28),
                           ),
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   const SizedBox(height: 18),
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFFFFD700), Color(0xFFF5C518), Color(0xFFE5A000)],
+                      colors: [Color(0xFF4DD0E1), Color(0xFF00BCD4), Color(0xFF0097A7)],
                     ).createShader(bounds),
                     child: const Text(
                       'XTREAM IPTV',
@@ -174,13 +174,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5C518).withOpacity(0.12),
+                      color: const Color(0xFF00BCD4).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.2), width: 1),
+                      border: Border.all(color: const Color(0xFF00BCD4).withOpacity(0.2), width: 1),
                     ),
                     child: const Text(
                       'Sin VIP  \u2022  Sin Anuncios  \u2022  100% Libre',
-                      style: TextStyle(fontSize: 10, color: Color(0xFFF5C518), letterSpacing: 1),
+                      style: TextStyle(fontSize: 10, color: Color(0xFF00BCD4), letterSpacing: 1),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -197,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       indicator: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
+                          colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
                         ),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         ),
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                            colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)],
                           ).createShader(bounds),
                           child: const Text(
                             'HacheJota',
@@ -373,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
         prefixIcon: Padding(
           padding: EdgeInsets.only(bottom: maxLines > 1 ? 50 : 0),
-          child: Icon(prefixIcon, color: const Color(0xFFF5C518), size: 20),
+          child: Icon(prefixIcon, color: const Color(0xFF00BCD4), size: 20),
         ),
         suffixIcon: suffixIcon,
         filled: true,
@@ -388,7 +388,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFF5C518), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF00BCD4), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -411,12 +411,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           gradient: onPressed != null
-              ? const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)])
+              ? const LinearGradient(colors: [Color(0xFF00BCD4), Color(0xFF0097A7)])
               : null,
           boxShadow: onPressed != null
               ? [
                   BoxShadow(
-                    color: const Color(0xFFF5C518).withOpacity(0.3),
+                    color: const Color(0xFF00BCD4).withOpacity(0.3),
                     blurRadius: 15,
                     spreadRadius: 1,
                   ),

@@ -116,12 +116,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       borderRadius: BorderRadius.circular(40),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFF5C518).withOpacity(0.35),
+                          color: const Color(0xFF00BCD4).withOpacity(0.35),
                           blurRadius: 50,
                           spreadRadius: 8,
                         ),
                         BoxShadow(
-                          color: const Color(0xFFE5A000).withOpacity(0.15),
+                          color: const Color(0xFF0097A7).withOpacity(0.15),
                           blurRadius: 80,
                           spreadRadius: 15,
                         ),
@@ -134,7 +134,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         return Container(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                              colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)],
                             ),
                             borderRadius: BorderRadius.circular(40),
                           ),
@@ -161,7 +161,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         children: [
                           ShaderMask(
                             shaderCallback: (bounds) => const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFF5C518), Color(0xFFE5A000)],
+                              colors: [Color(0xFF4DD0E1), Color(0xFF00BCD4), Color(0xFF0097A7)],
                             ).createShader(bounds),
                             child: const Text(
                               'XTREAM IPTV',
@@ -177,10 +177,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5C518).withOpacity(0.12),
+                              color: const Color(0xFF00BCD4).withOpacity(0.12),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFFF5C518).withOpacity(0.25),
+                                color: const Color(0xFF00BCD4).withOpacity(0.25),
                                 width: 1,
                               ),
                             ),
@@ -188,7 +188,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               'Sin VIP  \u2022  Sin Anuncios  \u2022  100% Libre',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFFF5C518),
+                                color: Color(0xFF00BCD4),
                                 letterSpacing: 1.5,
                               ),
                             ),
@@ -202,7 +202,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
                   // Loading indicator
                   const SpinKitThreeBounce(
-                    color: Color(0xFFF5C518),
+                    color: Color(0xFF00BCD4),
                     size: 22,
                   ),
 
@@ -224,7 +224,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         const SizedBox(height: 4),
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                            colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)],
                           ).createShader(bounds),
                           child: const Text(
                             'HACHEJOTA',

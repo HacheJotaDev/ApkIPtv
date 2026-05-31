@@ -150,8 +150,8 @@ class _NavButton extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            splashColor: const Color(0xFFF5C518).withOpacity(0.3),
-            highlightColor: const Color(0xFFF5C518).withOpacity(0.1),
+            splashColor: const Color(0xFF00BCD4).withOpacity(0.3),
+            highlightColor: const Color(0xFF00BCD4).withOpacity(0.1),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
@@ -161,7 +161,7 @@ class _NavButton extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFFF5C518).withOpacity(0.15)
+                    ? const Color(0xFF00BCD4).withOpacity(0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -176,7 +176,7 @@ class _NavButton extends StatelessWidget {
                         child: Icon(
                           isSelected ? item.activeIcon : item.icon,
                           key: ValueKey(isSelected),
-                          color: isSelected ? const Color(0xFFF5C518) : Colors.grey.shade500,
+                          color: isSelected ? const Color(0xFF00BCD4) : Colors.grey.shade500,
                           size: 24,
                         ),
                       ),
@@ -187,7 +187,7 @@ class _NavButton extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5C518),
+                              color: const Color(0xFF00BCD4),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             constraints: const BoxConstraints(minWidth: 14),
@@ -204,7 +204,7 @@ class _NavButton extends StatelessWidget {
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 250),
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFFF5C518) : Colors.grey.shade500,
+                      color: isSelected ? const Color(0xFF00BCD4) : Colors.grey.shade500,
                       fontSize: isSelected ? 11 : 10,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
@@ -242,12 +242,12 @@ class _RippleIndicator extends AnimatedWidget {
       width: 20 * progress,
       height: 3,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFE5A000)]),
+        gradient: const LinearGradient(colors: [Color(0xFF4DD0E1), Color(0xFF0097A7)]),
         borderRadius: BorderRadius.circular(2),
         boxShadow: progress < 1.0
             ? [
                 BoxShadow(
-                  color: const Color(0xFFF5C518).withOpacity(0.5 * (1 - progress)),
+                  color: const Color(0xFF00BCD4).withOpacity(0.5 * (1 - progress)),
                   blurRadius: 8 * (1 - progress),
                   spreadRadius: 2 * (1 - progress),
                 ),

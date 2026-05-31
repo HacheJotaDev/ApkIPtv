@@ -29,12 +29,12 @@ class MovieDetailScreen extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
                             color: const Color(0xFF1A1D30),
-                            child: const Icon(Icons.movie, size: 64, color: Color(0xFFF5C518)),
+                            child: const Icon(Icons.movie, size: 64, color: Color(0xFF00BCD4)),
                           ),
                         )
                       : Container(
                           color: const Color(0xFF1A1D30),
-                          child: const Icon(Icons.movie, size: 64, color: Color(0xFFF5C518)),
+                          child: const Icon(Icons.movie, size: 64, color: Color(0xFF00BCD4)),
                         ),
                   Container(
                     decoration: const BoxDecoration(
@@ -53,12 +53,12 @@ class MovieDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
+                            colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
                           ),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFF5C518).withOpacity(0.5),
+                              color: const Color(0xFF00BCD4).withOpacity(0.5),
                               blurRadius: 25,
                               spreadRadius: 3,
                             ),
@@ -97,9 +97,9 @@ class MovieDetailScreen extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         if (movie.rating.isNotEmpty)
-                          _InfoChip(icon: Icons.star, label: movie.rating, color: const Color(0xFFF5C518)),
+                          _InfoChip(icon: Icons.star, label: movie.rating, color: const Color(0xFF00BCD4)),
                         if (movie.releaseDate.isNotEmpty)
-                          _InfoChip(icon: Icons.calendar_today, label: movie.releaseDate, color: const Color(0xFFF5C518)),
+                          _InfoChip(icon: Icons.calendar_today, label: movie.releaseDate, color: const Color(0xFF00BCD4)),
                         if (movie.duration.isNotEmpty)
                           _InfoChip(icon: Icons.schedule, label: movie.duration, color: Colors.green),
                         if (movie.genre.isNotEmpty)
@@ -114,10 +114,10 @@ class MovieDetailScreen extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
-                          gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
+                          gradient: const LinearGradient(colors: [Color(0xFF00BCD4), Color(0xFF0097A7)]),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFF5C518).withOpacity(0.3),
+                              color: const Color(0xFF00BCD4).withOpacity(0.3),
                               blurRadius: 15,
                               spreadRadius: 1,
                             ),
@@ -227,7 +227,7 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFFF5C518), size: 18),
+        Icon(icon, color: const Color(0xFF00BCD4), size: 18),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
