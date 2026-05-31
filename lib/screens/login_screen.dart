@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       border: Border.all(color: const Color(0xFF00b0ff).withOpacity(0.2), width: 1),
                     ),
                     child: const Text(
-                      'Sin VIP \u2022 Sin Anuncios \u2022 100% Libre',
+                      'Sin VIP • Sin Anuncios • 100% Libre',
                       style: TextStyle(fontSize: 10, color: Color(0xFF00b0ff), letterSpacing: 1),
                     ),
                   ),
@@ -246,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               const SizedBox(height: 14),
                               _buildInputField(
                                 controller: _passwordController,
-                                hintText: 'Contrase\u00f1a',
+                                hintText: 'Contraseña',
                                 prefixIcon: Icons.lock_outline,
                                 obscureText: _obscurePassword,
                                 suffixIcon: IconButton(
@@ -257,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   ),
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
-                                validator: (v) => v!.isEmpty ? 'Ingresa la contrase\u00f1a' : null,
+                                validator: (v) => v!.isEmpty ? 'Ingresa la contraseña' : null,
                               ),
                               const SizedBox(height: 24),
                               Consumer<IptvProvider>(

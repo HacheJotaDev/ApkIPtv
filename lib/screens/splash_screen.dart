@@ -175,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               ),
                             ),
                             child: const Text(
-                              'Sin VIP \u2022 Sin Anuncios \u2022 100% Libre',
+                              'Sin VIP • Sin Anuncios • 100% Libre',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF00b0ff),
