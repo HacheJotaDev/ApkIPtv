@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 import '../models/iptv_models.dart';
 import '../models/app_state.dart';
@@ -40,7 +40,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _player = Player();
     _controller = VideoController(_player);
     
-    WakelockPlus.enable();
+
     
     _player.stream.playing.listen((playing) {
       if (mounted) {
@@ -95,7 +95,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     _player.dispose();
-    WakelockPlus.disable();
+
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();

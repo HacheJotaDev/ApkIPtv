@@ -26,6 +26,17 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
+// Fix: Set compileSdk for all subprojects
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileSdk 36
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
