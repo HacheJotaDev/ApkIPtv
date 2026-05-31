@@ -331,22 +331,36 @@ class _PlayerScreenState extends State<PlayerScreen> {
             if (!isLive && duration.inMilliseconds > 0)
               Column(
                 children: [
-                  VideoProgressIndicator(
-                    _controller,
-                    allowScrubbing: true,
-                    colors: const VideoProgressColors(
-                      playedColor: Color(0xFFE50914),
-                      bufferedColor: Colors.grey,
-                      backgroundColor: Colors.white24,
+                  SliderTheme(
+                    data: SliderThemeData(
+                      trackHeight: 3,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                      activeTrackColor: const Color(0xFFE50914),
+                      inactiveTrackColor: Colors.white24,
+                      thumbColor: const Color(0xFFE50914),
+                      bufferedTrackColor: Colors.grey,
+                    ),
+                    child: Slider(
+                      value: duration.inMilliseconds > 0 
+                          ? position.inMilliseconds.toDouble().clamp(0, duration.inMilliseconds.toDouble()) 
+                          : 0,
+                      min: 0,
+                      max: duration.inMilliseconds.toDouble(),
+                      onChanged: (value) {
+                        _player.seek(Duration(milliseconds: value.toInt()));
+                      },
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(_formatDuration(position), style: const TextStyle(color: Colors.white, fontSize: 12)),
-                      Text(_formatDuration(duration), style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_formatDuration(position), style: const TextStyle(color: Colors.white, fontSize: 12)),
+                        Text(_formatDuration(duration), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ],
               ),
