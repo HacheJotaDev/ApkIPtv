@@ -8,29 +8,23 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.EventChannel
 
-import com.google.android.gms.cast.CastDevice
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
-import com.google.android.gms.cast.MediaQueueItem
 import com.google.android.gms.cast.MediaStatus
-import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
-import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.common.api.PendingResult
 
 class MainActivity: FlutterActivity() {
     private val TAG = "XTREAM_IPTV"
 
-    // Intent channel for basic functionality
     private val CHANNEL = "com.hj.xtream.iptv/intent"
-    // Cast channel for Chromecast functionality
     private val CAST_CHANNEL = "com.hj.xtream.iptv/cast"
-    // Event channel for cast state updates
     private val CAST_STATE_CHANNEL = "com.hj.xtream.iptv/cast_state"
 
     private var castContext: CastContext? = null
@@ -81,12 +75,16 @@ class MainActivity: FlutterActivity() {
             Log.d(TAG, "Cast session resuming: $sessionId")
             sendCastState("connecting")
         }
+
+        override fun onSessionResumeFailed(session: CastSession, error: Int) {
+            Log.d(TAG, "Cast session resume failed: $error")
+            sendCastState("error")
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize intent channel (kept for backward compatibility)
         MethodChannel(flutterEngine?.dartExecutor?.binaryMessenger!!, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "launchIntent" -> {
@@ -113,14 +111,11 @@ class MainActivity: FlutterActivity() {
             }
         }
 
-        // Initialize Cast
         initCast()
 
-        // Setup Cast Method Channel
         MethodChannel(flutterEngine?.dartExecutor?.binaryMessenger!!, CAST_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "initialize" -> {
-                    // Already initialized in initCast
                     result.success(true)
                 }
                 "isAvailable" -> {
@@ -160,7 +155,7 @@ class MainActivity: FlutterActivity() {
                 }
                 "seekTo" -> {
                     val position = call.argument<Int>("position") ?: 0
-                    currentCastSession?.remoteMediaClient?.seekTo(position.toLong())
+                    currentCastSession?.remoteMediaClient?.seek(position.toLong())
                     result.success(true)
                 }
                 "stop" -> {
@@ -202,12 +197,10 @@ class MainActivity: FlutterActivity() {
             }
         }
 
-        // Setup Cast State Event Channel
         EventChannel(flutterEngine?.dartExecutor?.binaryMessenger!!, CAST_STATE_CHANNEL).setStreamHandler(
             object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                     castStateSink = events
-                    // Send initial state
                     val state = when {
                         currentCastSession != null -> "connected"
                         castContext != null -> "disconnected"
@@ -224,7 +217,6 @@ class MainActivity: FlutterActivity() {
 
     private fun initCast() {
         try {
-            // Check if Google Play Services are available
             val availability = GoogleApiAvailability.getInstance()
             val resultCode = availability.isGooglePlayServicesAvailable(this)
 
@@ -233,8 +225,6 @@ class MainActivity: FlutterActivity() {
                 return
             }
 
-            // CastContext.getSharedInstance requires an Executor in newer versions
-            // Use the deprecated Context version for compatibility with API 21+
             @Suppress("DEPRECATION")
             castContext = CastContext.getSharedInstance(this)
             sessionManager = castContext?.sessionManager
@@ -267,18 +257,14 @@ class MainActivity: FlutterActivity() {
                 return
             }
 
-            // Create media metadata
             val mediaMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE)
             mediaMetadata.putString(MediaMetadata.KEY_TITLE, title)
             mediaMetadata.putString(MediaMetadata.KEY_SUBTITLE, subtitle)
 
-            // Add image if available
             if (imageUrl.isNotEmpty()) {
-                val images = arrayListOf(com.google.android.gms.common.images.WebImage(Uri.parse(imageUrl)))
-                mediaMetadata.addImage(images[0])
+                mediaMetadata.addImage(com.google.android.gms.common.images.WebImage(Uri.parse(imageUrl)))
             }
 
-            // Determine stream type
             val streamType = when {
                 url.contains(".m3u8") -> MediaInfo.STREAM_TYPE_LIVE
                 url.contains("/live/") -> MediaInfo.STREAM_TYPE_LIVE
@@ -286,31 +272,29 @@ class MainActivity: FlutterActivity() {
                 else -> MediaInfo.STREAM_TYPE_BUFFERED
             }
 
-            // Create MediaInfo
             val mediaInfo = MediaInfo.Builder(url)
                 .setStreamType(streamType)
                 .setContentType(contentType)
                 .setMetadata(mediaMetadata)
                 .build()
 
-            // Load media
             val loadRequestData = MediaLoadRequestData.Builder()
                 .setMediaInfo(mediaInfo)
                 .setAutoplay(true)
-                .setStartTime(0L)
                 .build()
 
-            remoteMediaClient.load(loadRequestData)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Log.d(TAG, "Media loaded successfully to Cast device")
-                        result.success(true)
-                    } else {
-                        val error = task.exception?.message ?: "Unknown error loading media"
-                        Log.e(TAG, "Failed to load media: $error")
-                        result.error("LOAD_FAILED", error, null)
-                    }
+            val pendingResult = remoteMediaClient.load(loadRequestData)
+
+            pendingResult.setResultCallback { status ->
+                if (status.status.isSuccess) {
+                    Log.d(TAG, "Media loaded successfully to Cast device")
+                    result.success(true)
+                } else {
+                    val error = status.status.statusMessage ?: "Unknown error loading media"
+                    Log.e(TAG, "Failed to load media: $error")
+                    result.error("LOAD_FAILED", error, null)
                 }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading media to Cast: ${e.message}")
             result.error("CAST_ERROR", e.message, null)
