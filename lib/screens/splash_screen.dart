@@ -164,7 +164,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               colors: [Color(0xFFFFD700), Color(0xFFF5C518), Color(0xFFE5A000)],
                             ).createShader(bounds),
                             child: const Text(
-                              'HACHEJOTAFLIX',
+                              'XTREAM IPTV',
                               style: TextStyle(
                                 fontSize: 34,
                                 fontWeight: FontWeight.bold,

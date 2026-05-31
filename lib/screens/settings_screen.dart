@@ -260,7 +260,7 @@ class SettingsScreen extends StatelessWidget {
                     // Contact button - Telegram
                     GestureDetector(
                       onTap: () async {
-                        final uri = Uri.parse('https://t.me/@HcheJotaA_Bot');
+                        final uri = Uri.parse('https://t.me/HcheJotaA_Bot');
                         try {
                           await launchUrl(uri, mode: LaunchMode.externalApplication);
                         } catch (e) {
