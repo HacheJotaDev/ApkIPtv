@@ -66,28 +66,17 @@ jobs:
         done
         rm -rf android/app/src/main/kotlin/com/example
 
-    - name: Save Android files for debugging
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-config
-        path: android/
-
     - name: Install dependencies
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release 2>&1 | tee build_log.txt
+      run: flutter build apk --release
 
-    - name: Upload build log
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-log
-        path: build_log.txt
+    - name: Find APK
+      run: find build -name "*.apk" -type f
 
     - name: Upload APK
-      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: xtream-iptv-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: build/app/outputs/flutter-apk/*.apk
