@@ -249,13 +249,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        VideoProgressIndicator(
-                          _controller,
-                          allowScrubbing: true,
-                          colors: const VideoProgressColors(
-                            playedColor: Color(0xFF00d4ff),
-                            bufferedColor: Colors.white24,
-                            backgroundColor: Colors.white10,
+                        // Progress bar
+                        SliderTheme(
+                          data: SliderThemeData(
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                            trackShape: const CustomTrackShape(),
+                            overlayColor: const Color(0xFF00d4ff).withOpacity(0.2),
+                            activeTrackColor: const Color(0xFF00d4ff),
+                            inactiveTrackColor: Colors.white24,
+                            thumbColor: const Color(0xFF00d4ff),
+                          ),
+                          child: Slider(
+                            value: _duration.inMilliseconds > 0
+                                ? _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds.toDouble())
+                                : 0.0,
+                            min: 0.0,
+                            max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
+                            onChanged: (value) {
+                              _player.seek(Duration(milliseconds: value.toInt()));
+                            },
                           ),
                         ),
                         Row(
@@ -342,5 +354,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ),
       ),
     );
+  }
+}
+
+/// Custom track shape that allows full-width slider
+class CustomTrackShape extends RoundedRectSliderTrackShape {
+  const CustomTrackShape();
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final double trackHeight = sliderTheme.trackHeight ?? 4;
+    final double trackLeft = offset.dx;
+    final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    final double trackWidth = parentBox.size.width;
+    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
 }
