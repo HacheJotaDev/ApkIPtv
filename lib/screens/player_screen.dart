@@ -7,8 +7,9 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:android_intent_plus/flag.dart';
+
+/// MethodChannel for launching Android intents
+const MethodChannel _intentChannel = MethodChannel('com.hj.xtream.iptv/intent');
 
 class PlayerScreen extends StatefulWidget {
   final String title;
@@ -62,12 +63,9 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     ));
     _controller = VideoController(_player);
 
-    // Enable wakelock to keep screen on during playback
     WakelockPlus.enable();
-
     _setupListeners();
     _initPlayer();
-
     _startHideControlsTimer();
   }
 
@@ -75,24 +73,19 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     _playingSub = _player.stream.playing.listen((playing) {
       if (mounted && !_isDisposed) {
         setState(() => _isPlaying = playing);
-        if (playing) {
-          _startHideControlsTimer();
-        }
+        if (playing) _startHideControlsTimer();
       }
     });
 
     _errorSub = _player.stream.error.listen((error) {
       if (mounted && !_isDisposed && error.isNotEmpty) {
         debugPrint('Player error: $error');
-        // Auto-retry for live streams on first errors
         if (_retryCount < _maxRetries && widget.type == 'live') {
           _retryCount++;
           debugPrint('Auto-retry attempt $_retryCount/$_maxRetries');
           _retryTimer?.cancel();
           _retryTimer = Timer(Duration(seconds: 2 * _retryCount), () {
-            if (mounted && !_isDisposed) {
-              _retryPlayback();
-            }
+            if (mounted && !_isDisposed) _retryPlayback();
           });
         } else {
           setState(() {
@@ -105,15 +98,11 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     });
 
     _positionSub = _player.stream.position.listen((position) {
-      if (mounted && !_isDisposed) {
-        setState(() => _position = position);
-      }
+      if (mounted && !_isDisposed) setState(() => _position = position);
     });
 
     _durationSub = _player.stream.duration.listen((duration) {
-      if (mounted && !_isDisposed) {
-        setState(() => _duration = duration);
-      }
+      if (mounted && !_isDisposed) setState(() => _duration = duration);
     });
 
     _bufferingSub = _player.stream.buffering.listen((buffering) {
@@ -153,7 +142,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
 
   Future<void> _initPlayer() async {
     try {
-      // Build proper media with HTTP headers for IPTV streams
       final media = Media(
         widget.url,
         httpHeaders: {
@@ -162,27 +150,17 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
           'Accept': '*/*',
         },
       );
-
       await _player.open(media);
-
-      // For live streams, try to start playback immediately
-      if (widget.type == 'live') {
-        await _player.play();
-      }
-
-      // Set initial volume
+      if (widget.type == 'live') await _player.play();
       await _player.setVolume(_volume * 100);
     } catch (e) {
       if (mounted && !_isDisposed) {
         debugPrint('Init player error: $e');
-        // Auto-retry on init failure
         if (_retryCount < _maxRetries) {
           _retryCount++;
           _retryTimer?.cancel();
           _retryTimer = Timer(Duration(seconds: 2 * _retryCount), () {
-            if (mounted && !_isDisposed) {
-              _retryPlayback();
-            }
+            if (mounted && !_isDisposed) _retryPlayback();
           });
         } else {
           setState(() {
@@ -281,11 +259,11 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               ),
             ),
             const SizedBox(height: 16),
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.cast, color: Color(0xFFF5C518), size: 24),
-                const SizedBox(width: 10),
-                const Text(
+                Icon(Icons.cast, color: Color(0xFFF5C518), size: 24),
+                SizedBox(width: 10),
+                Text(
                   'Transmitir a TV',
                   style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
@@ -297,7 +275,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               style: TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const SizedBox(height: 20),
-            // Option 1: Open with VLC
             _CastOption(
               icon: Icons.play_circle_filled,
               iconColor: Colors.orange,
@@ -305,11 +282,10 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               subtitle: 'Reproduce en VLC para transmitir a Chromecast',
               onTap: () {
                 Navigator.pop(context);
-                _openWithVlc();
+                _openWithPackage('org.videolan.vlc');
               },
             ),
             const SizedBox(height: 10),
-            // Option 2: Open with MX Player
             _CastOption(
               icon: Icons.movie,
               iconColor: Colors.blue,
@@ -317,11 +293,10 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               subtitle: 'Reproduce con MX Player y su funcion de cast',
               onTap: () {
                 Navigator.pop(context);
-                _openWithMxPlayer();
+                _openWithPackage('com.mxtech.videoplayer.ad');
               },
             ),
             const SizedBox(height: 10),
-            // Option 3: Share URL to cast apps
             _CastOption(
               icon: Icons.share,
               iconColor: Colors.green,
@@ -329,23 +304,10 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               subtitle: 'Envia el enlace a AllCast, BubbleUPnP u otra app de cast',
               onTap: () {
                 Navigator.pop(context);
-                _shareForCast();
+                Share.share(widget.url, subject: widget.title);
               },
             ),
             const SizedBox(height: 10),
-            // Option 4: Open in web browser (for Smart TVs)
-            _CastOption(
-              icon: Icons.language,
-              iconColor: Colors.purple,
-              title: 'Abrir en navegador',
-              subtitle: 'Abre el stream en el navegador de tu Smart TV',
-              onTap: () {
-                Navigator.pop(context);
-                _openInBrowser();
-              },
-            ),
-            const SizedBox(height: 10),
-            // Option 5: Copy URL
             _CastOption(
               icon: Icons.copy,
               iconColor: Colors.cyan,
@@ -356,6 +318,17 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                 _copyStreamUrl();
               },
             ),
+            const SizedBox(height: 10),
+            _CastOption(
+              icon: Icons.open_in_new,
+              iconColor: Colors.purple,
+              title: 'Abrir con otro reproductor',
+              subtitle: 'Elige entre los reproductores instalados en tu dispositivo',
+              onTap: () {
+                Navigator.pop(context);
+                _openWithExternalPlayer();
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -363,120 +336,46 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     );
   }
 
-  /// Open stream with VLC for Android
-  Future<void> _openWithVlc() async {
+  /// Launch an Android intent to open stream with a specific package
+  Future<void> _openWithPackage(String packageName) async {
     if (!Platform.isAndroid) {
       _openWithExternalPlayer();
       return;
     }
     try {
-      final intent = AndroidIntent(
-        action: 'android.intent.action.VIEW',
-        data: widget.url,
-        type: 'video/*',
-        package: 'org.videolan.vlc',
-        flags: <int>[
-          Flag.FLAG_ACTIVITY_NEW_TASK,
-          Flag.FLAG_ACTIVITY_CLEAR_TOP,
-        ],
-      );
-      await intent.launch();
-    } catch (e) {
-      debugPrint('VLC not found, trying generic intent: $e');
-      // VLC not installed, try generic video intent
-      _openWithGenericVideoPlayer();
+      await _intentChannel.invokeMethod('launchIntent', {
+        'url': widget.url,
+        'package': packageName,
+        'type': 'video/*',
+      });
+    } on PlatformException catch (e) {
+      debugPrint('Intent launch failed for $packageName: ${e.message}');
+      // Package not found, try generic player
+      _openWithExternalPlayer();
     }
   }
 
-  /// Open stream with MX Player
-  Future<void> _openWithMxPlayer() async {
-    if (!Platform.isAndroid) {
-      _openWithExternalPlayer();
-      return;
-    }
-    try {
-      final intent = AndroidIntent(
-        action: 'android.intent.action.VIEW',
-        data: widget.url,
-        type: 'video/*',
-        package: 'com.mxtech.videoplayer.ad',
-        flags: <int>[
-          Flag.FLAG_ACTIVITY_NEW_TASK,
-          Flag.FLAG_ACTIVITY_CLEAR_TOP,
-        ],
-      );
-      await intent.launch();
-    } catch (e) {
-      debugPrint('MX Player not found, trying free version: $e');
+  /// Open with any available external video player
+  Future<void> _openWithExternalPlayer() async {
+    if (Platform.isAndroid) {
       try {
-        final intent = AndroidIntent(
-          action: 'android.intent.action.VIEW',
-          data: widget.url,
-          type: 'video/*',
-          package: 'com.mxtech.videoplayer.free',
-          flags: <int>[
-            Flag.FLAG_ACTIVITY_NEW_TASK,
-            Flag.FLAG_ACTIVITY_CLEAR_TOP,
-          ],
-        );
-        await intent.launch();
-      } catch (e2) {
-        debugPrint('MX Player free not found either: $e2');
-        _openWithGenericVideoPlayer();
+        await _intentChannel.invokeMethod('launchIntent', {
+          'url': widget.url,
+          'package': '',
+          'type': 'video/*',
+        });
+        return;
+      } on PlatformException catch (e) {
+        debugPrint('Generic intent failed: ${e.message}');
       }
     }
-  }
-
-  /// Open with any available video player via Android intent
-  Future<void> _openWithGenericVideoPlayer() async {
-    if (!Platform.isAndroid) {
-      _openWithExternalPlayer();
-      return;
-    }
-    try {
-      final intent = AndroidIntent(
-        action: 'android.intent.action.VIEW',
-        data: widget.url,
-        type: 'video/*',
-        flags: <int>[
-          Flag.FLAG_ACTIVITY_NEW_TASK,
-        ],
-      );
-      await intent.launch();
-    } catch (e) {
-      debugPrint('Generic video intent failed: $e');
-      // Final fallback: share
-      _shareForCast();
-    }
-  }
-
-  /// Share URL to cast apps (AllCast, BubbleUPnP, etc.)
-  void _shareForCast() {
-    Share.share(
-      widget.url,
-      subject: widget.title,
-    );
-  }
-
-  /// Open stream in a web browser (useful for Smart TV browsers)
-  Future<void> _openInBrowser() async {
+    // Fallback for non-Android or if MethodChannel fails
     final uri = Uri.tryParse(widget.url);
     if (uri != null) {
       try {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('No se pudo abrir en navegador: $e'),
-              backgroundColor: Colors.red.shade800,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+        if (mounted) Share.share(widget.url);
       }
     }
   }
@@ -487,13 +386,11 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
+          content: const Row(
             children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('Enlace copiado al portapapeles'),
-              ),
+              Icon(Icons.check_circle, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Expanded(child: Text('Enlace copiado al portapapeles')),
             ],
           ),
           backgroundColor: Colors.green.shade800,
@@ -502,24 +399,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
           duration: const Duration(seconds: 2),
         ),
       );
-    }
-  }
-
-  /// Legacy external player opener (fallback)
-  Future<void> _openWithExternalPlayer() async {
-    if (Platform.isAndroid) {
-      _openWithGenericVideoPlayer();
-      return;
-    }
-    final uri = Uri.tryParse(widget.url);
-    if (uri != null) {
-      try {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } catch (e) {
-        if (mounted) {
-          await Share.share(widget.url);
-        }
-      }
     }
   }
 
@@ -568,7 +447,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
           onTap: _toggleControls,
           child: Stack(
             children: [
-              // Video
               Center(
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
@@ -606,12 +484,10 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                   ),
                 ),
 
-              // Top bar with gradient
+              // Top bar
               if (_showControls || !_isPlaying)
                 Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
+                  top: 0, left: 0, right: 0,
                   child: SafeArea(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -649,31 +525,21 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(colors: [Colors.red, Colors.redAccent]),
                                 borderRadius: BorderRadius.circular(6),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 8),
-                                ],
+                                boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 8)],
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
+                                    width: 6, height: 6,
+                                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Text(
-                                    'EN VIVO',
-                                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
+                                  const Text('EN VIVO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ),
                           const SizedBox(width: 6),
-                          // Cast button - opens cast dialog
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
@@ -685,7 +551,6 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               tooltip: 'Transmitir a TV',
                             ),
                           ),
-                          // More options
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
@@ -700,132 +565,36 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               ),
                               onSelected: (value) {
                                 switch (value) {
-                                  case 'cast':
-                                    _showCastDialog();
-                                    break;
-                                  case 'external':
-                                    _openWithExternalPlayer();
-                                    break;
-                                  case 'share':
-                                    _shareStreamUrl();
-                                    break;
-                                  case 'copy':
-                                    _copyStreamUrl();
-                                    break;
-                                  case 'retry':
-                                    _retryCount = 0;
-                                    _retryPlayback();
-                                    break;
-                                  case 'speed_05':
-                                    _player.setRate(0.5);
-                                    setState(() => _speed = 0.5);
-                                    break;
-                                  case 'speed_075':
-                                    _player.setRate(0.75);
-                                    setState(() => _speed = 0.75);
-                                    break;
-                                  case 'speed_1':
-                                    _player.setRate(1.0);
-                                    setState(() => _speed = 1.0);
-                                    break;
-                                  case 'speed_125':
-                                    _player.setRate(1.25);
-                                    setState(() => _speed = 1.25);
-                                    break;
-                                  case 'speed_15':
-                                    _player.setRate(1.5);
-                                    setState(() => _speed = 1.5);
-                                    break;
-                                  case 'speed_2':
-                                    _player.setRate(2.0);
-                                    setState(() => _speed = 2.0);
-                                    break;
+                                  case 'cast': _showCastDialog(); break;
+                                  case 'external': _openWithExternalPlayer(); break;
+                                  case 'share': _shareStreamUrl(); break;
+                                  case 'copy': _copyStreamUrl(); break;
+                                  case 'retry': _retryCount = 0; _retryPlayback(); break;
+                                  case 'speed_05': _player.setRate(0.5); setState(() => _speed = 0.5); break;
+                                  case 'speed_075': _player.setRate(0.75); setState(() => _speed = 0.75); break;
+                                  case 'speed_1': _player.setRate(1.0); setState(() => _speed = 1.0); break;
+                                  case 'speed_125': _player.setRate(1.25); setState(() => _speed = 1.25); break;
+                                  case 'speed_15': _player.setRate(1.5); setState(() => _speed = 1.5); break;
+                                  case 'speed_2': _player.setRate(2.0); setState(() => _speed = 2.0); break;
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'cast',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.cast, color: Color(0xFFF5C518), size: 20),
-                                      SizedBox(width: 12),
-                                      Text('Transmitir a TV', style: TextStyle(color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'external',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.play_circle_outline, color: Color(0xFFF5C518), size: 20),
-                                      SizedBox(width: 12),
-                                      Text('Abrir con reproductor externo', style: TextStyle(color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'share',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.share, color: Color(0xFFF5C518), size: 20),
-                                      SizedBox(width: 12),
-                                      Text('Compartir enlace del stream', style: TextStyle(color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'copy',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.copy, color: Color(0xFFF5C518), size: 20),
-                                      SizedBox(width: 12),
-                                      Text('Copiar enlace', style: TextStyle(color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'retry',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.refresh, color: Color(0xFFF5C518), size: 20),
-                                      SizedBox(width: 12),
-                                      Text('Reintentar reproduccion', style: TextStyle(color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
+                                const PopupMenuItem(value: 'cast', child: Row(children: [Icon(Icons.cast, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Transmitir a TV', style: TextStyle(color: Colors.white))])),
+                                const PopupMenuItem(value: 'external', child: Row(children: [Icon(Icons.play_circle_outline, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Reproductor externo', style: TextStyle(color: Colors.white))])),
+                                const PopupMenuItem(value: 'share', child: Row(children: [Icon(Icons.share, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Compartir enlace', style: TextStyle(color: Colors.white))])),
+                                const PopupMenuItem(value: 'copy', child: Row(children: [Icon(Icons.copy, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Copiar enlace', style: TextStyle(color: Colors.white))])),
+                                const PopupMenuItem(value: 'retry', child: Row(children: [Icon(Icons.refresh, color: Color(0xFFF5C518), size: 20), SizedBox(width: 12), Text('Reintentar', style: TextStyle(color: Colors.white))])),
                                 if (widget.type != 'live') ...[
                                   const PopupMenuDivider(),
-                                  PopupMenuItem(
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.speed, color: Color(0xFFF5C518), size: 20),
-                                        const SizedBox(width: 12),
-                                        Text('Velocidad: ${_speed}x', style: const TextStyle(color: Colors.white70)),
-                                      ],
-                                    ),
-                                  ),
-                                  ...[
-                                    ('speed_05', '0.5x'),
-                                    ('speed_075', '0.75x'),
-                                    ('speed_1', '1.0x (Normal)'),
-                                    ('speed_125', '1.25x'),
-                                    ('speed_15', '1.5x'),
-                                    ('speed_2', '2.0x'),
-                                  ].map((e) => PopupMenuItem(
+                                  PopupMenuItem(child: Row(children: [const Icon(Icons.speed, color: Color(0xFFF5C518), size: 20), const SizedBox(width: 12), Text('Velocidad: ${_speed}x', style: const TextStyle(color: Colors.white70))])),
+                                  ...[('speed_05', '0.5x'), ('speed_075', '0.75x'), ('speed_1', '1.0x (Normal)'), ('speed_125', '1.25x'), ('speed_15', '1.5x'), ('speed_2', '2.0x')].map((e) => PopupMenuItem(
                                     value: e.$1,
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 52),
-                                      child: Text(
-                                        e.$2,
-                                        style: TextStyle(
-                                          color: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.'))
-                                              ? const Color(0xFFF5C518)
-                                              : Colors.white70,
-                                          fontWeight: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.'))
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                        ),
-                                      ),
+                                      child: Text(e.$2, style: TextStyle(
+                                        color: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.')) ? const Color(0xFFF5C518) : Colors.white70,
+                                        fontWeight: _speed == double.parse(e.$1.replaceAll('speed_', '').replaceAll('_', '.')) ? FontWeight.bold : FontWeight.normal,
+                                      )),
                                     ),
                                   )),
                                 ],
@@ -838,7 +607,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                   ),
                 ),
 
-              // Center play/pause with glow
+              // Center play/pause
               if (!_hasError && !_isBuffering && (_showControls || !_isPlaying))
                 Center(
                   child: GestureDetector(
@@ -846,23 +615,11 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
-                        ),
+                        gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFF5C518).withOpacity(0.5),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
-                        ],
+                        boxShadow: [BoxShadow(color: const Color(0xFFF5C518).withOpacity(0.5), blurRadius: 30, spreadRadius: 5)],
                       ),
-                      child: Icon(
-                        _isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: const Color(0xFF1A1D30),
-                        size: 52,
-                      ),
+                      child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: const Color(0xFF1A1D30), size: 52),
                     ),
                   ),
                 ),
@@ -870,23 +627,16 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
               // Bottom controls for VOD
               if (_showControls && widget.type != 'live' && _duration > Duration.zero)
                 Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
+                  bottom: 0, left: 0, right: 0,
                   child: SafeArea(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Color(0xBB000000), Colors.transparent],
-                        ),
+                        gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Color(0xBB000000), Colors.transparent]),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Progress bar
                           SliderTheme(
                             data: SliderThemeData(
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
@@ -897,93 +647,32 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                               thumbColor: const Color(0xFFF5C518),
                             ),
                             child: Slider(
-                              value: _duration.inMilliseconds > 0
-                                  ? _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds.toDouble())
-                                  : 0.0,
+                              value: _duration.inMilliseconds > 0 ? _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds.toDouble()) : 0.0,
                               min: 0.0,
                               max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
-                              onChanged: (value) {
-                                _player.seek(Duration(milliseconds: value.toInt()));
-                              },
+                              onChanged: (value) => _player.seek(Duration(milliseconds: value.toInt())),
                             ),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                _formatDuration(_position),
-                                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                              ),
+                              Text(_formatDuration(_position), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // 10s backward
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.replay_10, color: Colors.white, size: 22),
-                                      onPressed: () {
-                                        final newPos = _position - const Duration(seconds: 10);
-                                        _player.seek(newPos < Duration.zero ? Duration.zero : newPos);
-                                      },
-                                    ),
-                                  ),
+                                  Container(decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: IconButton(icon: const Icon(Icons.replay_10, color: Colors.white, size: 22), onPressed: () { final newPos = _position - const Duration(seconds: 10); _player.seek(newPos < Duration.zero ? Duration.zero : newPos); })),
                                   const SizedBox(width: 4),
-                                  // Play/pause
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        _isPlaying ? Icons.pause : Icons.play_arrow,
-                                        color: Colors.white,
-                                        size: 28,
-                                      ),
-                                      onPressed: () => _player.playOrPause(),
-                                    ),
-                                  ),
+                                  Container(decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: IconButton(icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 28), onPressed: () => _player.playOrPause())),
                                   const SizedBox(width: 4),
-                                  // 10s forward
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.forward_10, color: Colors.white, size: 22),
-                                      onPressed: () {
-                                        final newPos = _position + const Duration(seconds: 10);
-                                        _player.seek(newPos > _duration ? _duration : newPos);
-                                      },
-                                    ),
-                                  ),
+                                  Container(decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: IconButton(icon: const Icon(Icons.forward_10, color: Colors.white, size: 22), onPressed: () { final newPos = _position + const Duration(seconds: 10); _player.seek(newPos > _duration ? _duration : newPos); })),
                                 ],
                               ),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (_speed != 1.0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF5C518).withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        '${_speed}x',
-                                        style: const TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
+                                  if (_speed != 1.0) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFF5C518).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text('${_speed}x', style: const TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold))),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    _formatDuration(_duration),
-                                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                  ),
+                                  Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                                 ],
                               ),
                             ],
@@ -992,50 +681,25 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                       ),
                     ),
                   ),
-              ),
+                ),
 
-              // Live stream bottom bar with quick actions
+              // Live stream bottom bar
               if (_showControls && widget.type == 'live' && !_hasError)
                 Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
+                  bottom: 0, left: 0, right: 0,
                   child: SafeArea(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Color(0xBB000000), Colors.transparent],
-                        ),
+                        gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Color(0xBB000000), Colors.transparent]),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _QuickAction(
-                            icon: Icons.cast_connected,
-                            label: 'Transmitir',
-                            onTap: _showCastDialog,
-                          ),
-                          _QuickAction(
-                            icon: Icons.share,
-                            label: 'Compartir',
-                            onTap: _shareForCast,
-                          ),
-                          _QuickAction(
-                            icon: Icons.copy,
-                            label: 'Copiar URL',
-                            onTap: _copyStreamUrl,
-                          ),
-                          _QuickAction(
-                            icon: Icons.refresh,
-                            label: 'Reintentar',
-                            onTap: () {
-                              _retryCount = 0;
-                              _retryPlayback();
-                            },
-                          ),
+                          _QuickAction(icon: Icons.cast_connected, label: 'Transmitir', onTap: _showCastDialog),
+                          _QuickAction(icon: Icons.share, label: 'Compartir', onTap: () => Share.share(widget.url, subject: widget.title)),
+                          _QuickAction(icon: Icons.copy, label: 'Copiar URL', onTap: _copyStreamUrl),
+                          _QuickAction(icon: Icons.refresh, label: 'Reintentar', onTap: () { _retryCount = 0; _retryPlayback(); }),
                         ],
                       ),
                     ),
@@ -1052,96 +716,44 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
                       color: const Color(0xFF121421),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20)],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(Icons.error_outline, color: Colors.red, size: 36),
-                        ),
+                        Container(width: 60, height: 60, decoration: BoxDecoration(color: Colors.red.withOpacity(0.15), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.error_outline, color: Colors.red, size: 36)),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Error al reproducir',
-                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
+                        const Text('Error al reproducir', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(
-                          _errorMessage,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
+                        Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                         const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
-                              ),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)])),
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _retryCount = 0;
-                                  setState(() {
-                                    _hasError = false;
-                                    _errorMessage = '';
-                                    _isBuffering = true;
-                                  });
-                                  _retryPlayback();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  foregroundColor: const Color(0xFF1A1D30),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                icon: const Icon(Icons.refresh, size: 18),
-                                label: const Text('REINTENTAR'),
+                                onPressed: () { _retryCount = 0; setState(() { _hasError = false; _errorMessage = ''; _isBuffering = true; }); _retryPlayback(); },
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, foregroundColor: const Color(0xFF1A1D30), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                                icon: const Icon(Icons.refresh, size: 18), label: const Text('REINTENTAR'),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5)),
-                              ),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5))),
                               child: ElevatedButton.icon(
                                 onPressed: _showCastDialog,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1A1D30),
-                                  shadowColor: Colors.transparent,
-                                  foregroundColor: const Color(0xFFF5C518),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                icon: const Icon(Icons.cast, size: 18),
-                                label: const Text('EN TV'),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A1D30), shadowColor: Colors.transparent, foregroundColor: const Color(0xFFF5C518), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                                icon: const Icon(Icons.cast, size: 18), label: const Text('EN TV'),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5)),
-                              ),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.5))),
                               child: ElevatedButton.icon(
                                 onPressed: _openWithExternalPlayer,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1A1D30),
-                                  shadowColor: Colors.transparent,
-                                  foregroundColor: const Color(0xFFF5C518),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                icon: const Icon(Icons.play_circle_outline, size: 18),
-                                label: const Text('EXTERNO'),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A1D30), shadowColor: Colors.transparent, foregroundColor: const Color(0xFFF5C518), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                                icon: const Icon(Icons.play_circle_outline, size: 18), label: const Text('EXTERNO'),
                               ),
                             ),
                           ],
@@ -1163,11 +775,7 @@ class _QuickAction extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _QuickAction({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1175,20 +783,13 @@ class _QuickAction extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
+        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.1))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: const Color(0xFFF5C518), size: 22),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500),
-            ),
+            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -1196,7 +797,6 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-/// Cast option tile for the bottom sheet
 class _CastOption extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -1204,13 +804,7 @@ class _CastOption extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
-  const _CastOption({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  const _CastOption({required this.icon, required this.iconColor, required this.title, required this.subtitle, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1219,41 +813,12 @@ class _CastOption extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1D30),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
-        ),
+        decoration: BoxDecoration(color: const Color(0xFF1A1D30), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5))),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
-            ),
+            Container(width: 44, height: 44, decoration: BoxDecoration(color: iconColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: iconColor, size: 24)),
             const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(color: Colors.grey, fontSize: 11),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)), const SizedBox(height: 2), Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis)])),
             const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
           ],
         ),
@@ -1262,17 +827,10 @@ class _CastOption extends StatelessWidget {
   }
 }
 
-/// Custom track shape that allows full-width slider
 class CustomTrackShape extends RoundedRectSliderTrackShape {
   const CustomTrackShape();
   @override
-  Rect getPreferredRect({
-    required RenderBox parentBox,
-    Offset offset = Offset.zero,
-    required SliderThemeData sliderTheme,
-    bool isEnabled = false,
-    bool isDiscrete = false,
-  }) {
+  Rect getPreferredRect({required RenderBox parentBox, Offset offset = Offset.zero, required SliderThemeData sliderTheme, bool isEnabled = false, bool isDiscrete = false}) {
     final double trackHeight = sliderTheme.trackHeight ?? 4;
     final double trackLeft = offset.dx;
     final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
