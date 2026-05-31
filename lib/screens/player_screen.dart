@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit/src/player/native_player.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -155,20 +156,31 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
     return 'Error al reproducir. Intenta reintentar.';
   }
 
+  /// Set MPV properties for HLS live streams via NativePlayer
+  void _setLiveStreamProperties() {
+    try {
+      if (_player.platform is NativePlayer) {
+        final nativePlayer = _player.platform as NativePlayer;
+        nativePlayer.setProperty('force-seekable', 'no');
+        nativePlayer.setProperty('cache', 'yes');
+        nativePlayer.setProperty('demux-max-bytes', '100MiB');
+        nativePlayer.setProperty('demux-max-back-bytes', '50MiB');
+        debugPrint('Live stream MPV properties set successfully');
+      } else {
+        debugPrint('NativePlayer not available, cannot set MPV properties');
+      }
+    } catch (e) {
+      debugPrint('MPV property set error (non-fatal): $e');
+    }
+  }
+
   Future<void> _initPlayer() async {
     try {
       // For live streams, set MPV properties to handle HLS properly
       // This prevents the 10-second pause bug where mpv thinks the first
       // .ts segment is the entire video
       if (_isLiveStream) {
-        try {
-          await _player.setProperty('force-seekable', 'no');
-          await _player.setProperty('cache', 'yes');
-          await _player.setProperty('demux-max-bytes', '100MiB');
-          await _player.setProperty('demux-max-back-bytes', '50MiB');
-        } catch (e) {
-          debugPrint('MPV property set error (non-fatal): $e');
-        }
+        _setLiveStreamProperties();
       }
 
       final media = Media(
@@ -215,14 +227,7 @@ class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMix
       await Future.delayed(const Duration(milliseconds: 800));
 
       if (_isLiveStream) {
-        try {
-          await _player.setProperty('force-seekable', 'no');
-          await _player.setProperty('cache', 'yes');
-          await _player.setProperty('demux-max-bytes', '100MiB');
-          await _player.setProperty('demux-max-back-bytes', '50MiB');
-        } catch (e) {
-          debugPrint('MPV property set error (non-fatal): $e');
-        }
+        _setLiveStreamProperties();
       }
 
       final media = Media(
