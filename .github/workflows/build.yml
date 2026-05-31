@@ -70,13 +70,26 @@ jobs:
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release
+      run: flutter build apk --release 2>&1 | tee build_log.txt
 
-    - name: Find APK
-      run: find build -name "*.apk" -type f
+    - name: Find APK files
+      if: always()
+      run: find build -name "*.apk" -type f 2>/dev/null || echo "No APK found"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: xtream-iptv-apk
-        path: build/app/outputs/flutter-apk/*.apk
+        path: |
+          build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/apk/release/app-release.apk
+          build/app/outputs/apk/release/*.apk
+          build/app/outputs/flutter-apk/*.apk
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: build_log.txt
