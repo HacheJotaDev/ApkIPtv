@@ -37,8 +37,8 @@ jobs:
 
         find android -type f | while read f; do
           if file "$f" | grep -q text; then
-            sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
-            sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' "$f" 2>/dev/null || true
+            sed -i 's/com\.xtream\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
+            sed -i 's/com\/xtream\/xtream_iptv/com\/xtream\/iptv/g' "$f" 2>/dev/null || true
           fi
         done
 
@@ -58,8 +58,9 @@ jobs:
         mkdir -p android/app/src/main/kotlin/com/xtream/iptv
         find android -name "MainActivity.kt" | while read f; do
           cp "$f" android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
+          sed -i 's/com\.xtream\.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
         done
+        rm -rf android/app/src/main/kotlin/com/xtream/xtream_iptv
         rm -rf android/app/src/main/kotlin/com/example
 
     - name: Fix Gradle for third-party plugin compatibility
@@ -117,7 +118,9 @@ jobs:
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release 2>&1 | tee build_log.txt
+      run: |
+        set -o pipefail
+        flutter build apk --release 2>&1 | tee build_log.txt
 
     - name: Locate APK and upload
       run: |
