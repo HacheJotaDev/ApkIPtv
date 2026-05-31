@@ -25,69 +25,40 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Show Flutter version
-      run: flutter --version
-
     - name: Generate fresh Android config
       run: |
         cd /tmp
         flutter create --org com.xtream --project-name xtream_iptv fresh_xtream
-        
-        echo "===== FILES IN android/ ====="
-        find /tmp/fresh_xtream/android -type f | sort
-        
-        echo ""
-        echo "===== settings.gradle or settings.gradle.kts ====="
-        cat /tmp/fresh_xtream/android/settings.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/settings.gradle.kts 2>/dev/null
-        
-        echo ""
-        echo "===== root build.gradle or build.gradle.kts ====="
-        cat /tmp/fresh_xtream/android/build.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/build.gradle.kts 2>/dev/null
-        
-        echo ""
-        echo "===== app build.gradle or build.gradle.kts ====="
-        cat /tmp/fresh_xtream/android/app/build.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/app/build.gradle.kts 2>/dev/null
-        
-        echo ""
-        echo "===== gradle-wrapper.properties ====="
-        cat /tmp/fresh_xtream/android/gradle/wrapper/gradle-wrapper.properties
-        
-        echo ""
-        echo "===== AndroidManifest.xml ====="
-        cat /tmp/fresh_xtream/android/app/src/main/AndroidManifest.xml
-        
-        echo ""
-        echo "===== MainActivity ====="
-        find /tmp/fresh_xtream/android -name "MainActivity.*" -exec echo "File: {}" \; -exec cat {} \;
 
     - name: Replace Android directory
       run: |
         rm -rf android
         cp -r /tmp/fresh_xtream/android .
         
-        # Update applicationId and namespace in all gradle files
-        find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) | while read f; do
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f"
-          sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' "$f"
+        # Fix package names in all text files
+        find android -type f | while read f; do
+          if file "$f" | grep -q text; then
+            sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
+            sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' "$f" 2>/dev/null || true
+          fi
         done
         
-        # Update compileSdk/targetSdk to 36, minSdk to 21 for media_kit
-        find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) | while read f; do
-          # Works for both Groovy and Kotlin DSL: compileSdk = NN or compileSdkVersion NN
-          sed -i -E 's/compileSdk(Version)? =? [0-9]+/compileSdk = 36/g' "$f"
-          sed -i -E 's/targetSdk(Version)? =? [0-9]+/targetSdk = 36/g' "$f"
-          sed -i -E 's/minSdk(Version)? =? [0-9]+/minSdk = 21/g' "$f"
+        # Update SDK versions
+        find android -type f | while read f; do
+          if file "$f" | grep -q text; then
+            sed -i -E 's/compileSdk(Version)?[ =]+[0-9]+/compileSdk = 36/g' "$f" 2>/dev/null || true
+            sed -i -E 's/targetSdk(Version)?[ =]+[0-9]+/targetSdk = 36/g' "$f" 2>/dev/null || true
+            sed -i -E 's/minSdk(Version)?[ =]+[0-9]+/minSdk = 21/g' "$f" 2>/dev/null || true
+          fi
         done
         
-        # Update AndroidManifest.xml files
+        # Fix AndroidManifest
         find android -name "AndroidManifest.xml" | while read f; do
-          sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f"
           sed -i 's/xtream_iptv/XTREAM IPTV/g' "$f"
-          # Add cleartext traffic permission
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' "$f"
         done
         
-        # Fix MainActivity package
+        # Fix MainActivity
         mkdir -p android/app/src/main/kotlin/com/xtream/iptv
         find android -name "MainActivity.kt" | while read f; do
           cp "$f" android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
@@ -95,13 +66,27 @@ jobs:
         done
         rm -rf android/app/src/main/kotlin/com/example
 
+    - name: Save Android files for debugging
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-config
+        path: android/
+
     - name: Install dependencies
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release
+      run: flutter build apk --release 2>&1 | tee build_log.txt
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: build_log.txt
 
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: xtream-iptv-apk
