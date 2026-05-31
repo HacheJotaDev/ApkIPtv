@@ -1,7 +1,1 @@
-linter:
-  rules:
-    prefer_const_constructors: false
-    prefer_const_literals_to_create_immutables: false
-    avoid_print: false
-    unused_import: ignore
-    unused_local_variable: ignore
+include: package:flutter_lints/flutter.yaml

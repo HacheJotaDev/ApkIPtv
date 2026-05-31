@@ -1,0 +1,277 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/xtream_credentials.dart';
+import '../models/category.dart';
+import '../models/channel.dart';
+import '../models/movie.dart';
+import '../models/series.dart';
+import '../services/xtream_service.dart';
+import '../services/m3u_parser.dart';
+
+class IptvProvider extends ChangeNotifier {
+  final XtreamService _xtreamService = XtreamService();
+
+  // Auth state
+  XtreamCredentials? _credentials;
+  XtreamCredentials? get credentials => _credentials;
+  Map<String, dynamic>? _userInfo;
+  Map<String, dynamic>? get userInfo => _userInfo;
+  bool _isAuthenticated = false;
+  bool get isAuthenticated => _isAuthenticated;
+  String _connectionType = 'xtream'; // 'xtream' or 'm3u'
+  String get connectionType => _connectionType;
+
+  // Loading states
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+  String _errorMessage = '';
+  String get errorMessage => _errorMessage;
+
+  // Live TV
+  List<Category> _liveCategories = [];
+  List<Category> get liveCategories => _liveCategories;
+  List<Channel> _liveChannels = [];
+  List<Channel> get liveChannels => _liveChannels;
+  String? _selectedLiveCategory;
+  String? get selectedLiveCategory => _selectedLiveCategory;
+
+  // VOD (Movies)
+  List<Category> _vodCategories = [];
+  List<Category> get vodCategories => _vodCategories;
+  List<Movie> _vodMovies = [];
+  List<Movie> get vodMovies => _vodMovies;
+  String? _selectedVodCategory;
+  String? get selectedVodCategory => _selectedVodCategory;
+
+  // Series
+  List<Category> _seriesCategories = [];
+  List<Category> get seriesCategories => _seriesCategories;
+  List<Series> _seriesList = [];
+  List<Series> get seriesList => _seriesList;
+  String? _selectedSeriesCategory;
+  String? get selectedSeriesCategory => _selectedSeriesCategory;
+
+  // Search
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+
+  List<Channel> get filteredLiveChannels {
+    var result = _liveChannels;
+    if (_searchQuery.isNotEmpty) {
+      result = result.where((c) => c.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    }
+    return result;
+  }
+
+  List<Movie> get filteredVodMovies {
+    var result = _vodMovies;
+    if (_searchQuery.isNotEmpty) {
+      result = result.where((m) => m.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    }
+    return result;
+  }
+
+  List<Series> get filteredSeriesList {
+    var result = _seriesList;
+    if (_searchQuery.isNotEmpty) {
+      result = result.where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    }
+    return result;
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  // Auth methods
+  Future<bool> loginWithXtream(String server, String username, String password) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      final creds = XtreamCredentials(server: server, username: username, password: password);
+      final data = await _xtreamService.authenticate(creds);
+      if (data != null) {
+        _credentials = creds;
+        _userInfo = data['user_info'];
+        _isAuthenticated = true;
+        _connectionType = 'xtream';
+        await _saveCredentials(creds);
+        await _loadAllContent();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Credenciales incorrectas o servidor no disponible';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Error de conexión: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> loginWithM3u(String url) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      final content = await _xtreamService.getM3uPlaylist(url);
+      if (content != null && content.isNotEmpty) {
+        final parsed = M3uParser.parseM3u(content);
+        _liveChannels = List<Channel>.from(parsed['channels']);
+        _vodMovies = List<Movie>.from(parsed['movies']);
+        _liveCategories = List<Category>.from(parsed['categories'].where((c) => c.type == 'live'));
+        _vodCategories = List<Category>.from(parsed['categories'].where((c) => c.type == 'vod'));
+        _connectionType = 'm3u';
+        _isAuthenticated = true;
+        await _saveM3uUrl(url);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'No se pudo cargar la lista M3U';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Error al cargar M3U: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> _loadAllContent() async {
+    if (_credentials == null) return;
+
+    // Load categories
+    _liveCategories = await _xtreamService.getLiveCategories(_credentials!);
+    _vodCategories = await _xtreamService.getVodCategories(_credentials!);
+    _seriesCategories = await _xtreamService.getSeriesCategories(_credentials!);
+    notifyListeners();
+
+    // Load streams
+    _liveChannels = await _xtreamService.getLiveStreams(_credentials!);
+    _vodMovies = await _xtreamService.getVodStreams(_credentials!);
+    _seriesList = await _xtreamService.getSeriesList(_credentials!);
+    notifyListeners();
+  }
+
+  Future<void> selectLiveCategory(String? categoryId) async {
+    _selectedLiveCategory = categoryId;
+    _isLoading = true;
+    notifyListeners();
+
+    if (_connectionType == 'xtream' && _credentials != null) {
+      _liveChannels = await _xtreamService.getLiveStreams(_credentials!, categoryId: categoryId);
+    } else {
+      if (categoryId != null) {
+        _liveChannels = _liveChannels.where((c) => c.categoryId == categoryId).toList();
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> selectVodCategory(String? categoryId) async {
+    _selectedVodCategory = categoryId;
+    _isLoading = true;
+    notifyListeners();
+
+    if (_connectionType == 'xtream' && _credentials != null) {
+      _vodMovies = await _xtreamService.getVodStreams(_credentials!, categoryId: categoryId);
+    } else {
+      if (categoryId != null) {
+        _vodMovies = _vodMovies.where((m) => m.categoryId == categoryId).toList();
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> selectSeriesCategory(String? categoryId) async {
+    _selectedSeriesCategory = categoryId;
+    _isLoading = true;
+    notifyListeners();
+
+    if (_connectionType == 'xtream' && _credentials != null) {
+      _seriesList = await _xtreamService.getSeriesList(_credentials!, categoryId: categoryId);
+    } else {
+      if (categoryId != null) {
+        _seriesList = _seriesList.where((s) => s.categoryId == categoryId).toList();
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<SeriesInfo?> getSeriesInfo(String seriesId) async {
+    if (_credentials == null) return null;
+    return _xtreamService.getSeriesInfo(_credentials!, seriesId);
+  }
+
+  // Persistence
+  Future<void> _saveCredentials(XtreamCredentials creds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('xtream_creds', json.encode(creds.toJson()));
+    await prefs.setString('connection_type', 'xtream');
+  }
+
+  Future<void> _saveM3uUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('m3u_url', url);
+    await prefs.setString('connection_type', 'm3u');
+  }
+
+  Future<bool> tryAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final type = prefs.getString('connection_type');
+
+    if (type == 'xtream') {
+      final credsStr = prefs.getString('xtream_creds');
+      if (credsStr != null) {
+        final creds = XtreamCredentials.fromJson(json.decode(credsStr));
+        return await loginWithXtream(creds.server, creds.username, creds.password);
+      }
+    } else if (type == 'm3u') {
+      final url = prefs.getString('m3u_url');
+      if (url != null) {
+        return await loginWithM3u(url);
+      }
+    }
+    return false;
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    _credentials = null;
+    _userInfo = null;
+    _isAuthenticated = false;
+    _connectionType = 'xtream';
+    _liveCategories = [];
+    _liveChannels = [];
+    _vodCategories = [];
+    _vodMovies = [];
+    _seriesCategories = [];
+    _seriesList = [];
+    _selectedLiveCategory = null;
+    _selectedVodCategory = null;
+    _selectedSeriesCategory = null;
+    _searchQuery = '';
+    notifyListeners();
+  }
+}

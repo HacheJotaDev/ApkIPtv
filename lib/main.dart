@@ -1,45 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:media_kit/media_kit.dart';
-import 'models/app_state.dart';
+import 'providers/iptv_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  
-  final prefs = await SharedPreferences.getInstance();
-  final appState = AppState(prefs);
-  
   runApp(
-    ChangeNotifierProvider.value(
-      value: appState,
-      child: const HacheJotaIPTV(),
+    ChangeNotifierProvider(
+      create: (_) => IptvProvider(),
+      child: const XtreamIPTVApp(),
     ),
   );
 }
 
-class HacheJotaIPTV extends StatelessWidget {
-  const HacheJotaIPTV({super.key});
+class XtreamIPTVApp extends StatelessWidget {
+  const XtreamIPTVApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HacheJota IPTV',
+      title: 'XTREAM IPTV',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        primarySwatch: Colors.blue,
         brightness: Brightness.dark,
-        primaryColor: const Color(0xFFE50914),
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFE50914),
-          secondary: Color(0xFFE50914),
-          surface: Color(0xFF1A1A2E),
-          onSurface: Colors.white,
-        ),
+        scaffoldBackgroundColor: const Color(0xFF0a0a0a),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1A1A2E),
+          backgroundColor: Color(0xFF1a1a2e),
           elevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
@@ -49,37 +38,44 @@ class HacheJotaIPTV extends StatelessWidget {
           ),
           iconTheme: IconThemeData(color: Colors.white),
         ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF1a1a2e),
+          selectedItemColor: Color(0xFF00d4ff),
+          unselectedItemColor: Colors.grey,
+          type: BottomNavigationBarType.fixed,
+        ),
         cardTheme: CardTheme(
-          color: const Color(0xFF1A1A2E),
+          color: const Color(0xFF1a1a2e),
           elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Color(0xFF1A1A2E),
-          selectedItemColor: Color(0xFFE50914),
-          unselectedItemColor: Colors.grey,
-          type: BottomNavigationBarType.fixed,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white70),
+          titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          titleMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF2A2A4A),
+          fillColor: const Color(0xFF16213e),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           hintStyle: const TextStyle(color: Colors.grey),
-          prefixIconColor: Colors.grey,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFE50914),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            backgroundColor: const Color(0xFF00d4ff),
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
       ),

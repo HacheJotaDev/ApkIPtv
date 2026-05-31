@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
-import '../models/app_state.dart';
-import 'main_navigator.dart';
+import '../providers/iptv_provider.dart';
+import 'login_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,150 +12,99 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-  late Animation<double> _scale;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
-    
-    _scale = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
-    
-    _controller.forward();
-    
-    // Auto-reconnect and navigate
-    _initApp();
+    _tryAutoLogin();
   }
 
-  Future<void> _initApp() async {
-    // Wait for splash animation
+  Future<void> _tryAutoLogin() async {
     await Future.delayed(const Duration(seconds: 2));
-    
     if (!mounted) return;
-    
-    final appState = Provider.of<AppState>(context, listen: false);
-    
-    // Auto-reconnect if credentials exist
-    if (appState.hasConnection) {
-      await appState.autoReconnect();
-    }
-    
-    if (!mounted) return;
-    
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainNavigator()),
-    );
-  }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    final provider = Provider.of<IptvProvider>(context, listen: false);
+    final success = await provider.tryAutoLogin();
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF1A1A2E),
-              Color(0xFF0D0D0D),
-              Color(0xFF1A1A2E),
+              Color(0xFF0a0a0a),
+              Color(0xFF1a1a2e),
+              Color(0xFF16213e),
             ],
           ),
         ),
         child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _opacity.value,
-                child: Transform.scale(
-                  scale: _scale.value,
-                  child: child,
-                ),
-              );
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFE50914).withOpacity(0.5),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                    ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      fit: BoxFit.cover,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00d4ff).withOpacity(0.3),
+                      blurRadius: 30,
+                      spreadRadius: 5,
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 30),
-                const Text(
-                  'HacheJota',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
+                child: const Icon(
+                  Icons.play_circle_fill,
+                  size: 70,
+                  color: Colors.white,
                 ),
-                const Text(
-                  'IPTV',
-                  style: TextStyle(
-                    color: Color(0xFFE50914),
-                    fontSize: 28,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 8,
-                  ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'XTREAM IPTV',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 2,
                 ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(
-                    color: const Color(0xFFE50914).withOpacity(0.7),
-                    strokeWidth: 3,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sin VIP • Sin Anuncios',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF00d4ff),
+                  letterSpacing: 1,
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  'Sin anuncios - Sin VIP - Todo libre',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 48),
+              const SpinKitThreeBounce(
+                color: Color(0xFF00d4ff),
+                size: 24,
+              ),
+            ],
           ),
         ),
       ),

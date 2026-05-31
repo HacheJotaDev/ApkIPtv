@@ -1,4 +1,4 @@
-package com.hachejota.iptv
+package com.xtream.iptv
 
 import io.flutter.embedding.android.FlutterActivity
 
