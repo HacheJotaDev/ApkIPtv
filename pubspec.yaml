@@ -19,6 +19,9 @@ dependencies:
   shared_preferences: ^2.2.3
   cached_network_image: ^3.3.1
   flutter_spinkit: ^5.2.1
+  wakelock_plus: ^1.2.8
+  url_launcher: ^6.3.1
+  share_plus: ^10.0.0
 
 flutter:
   uses-material-design: true

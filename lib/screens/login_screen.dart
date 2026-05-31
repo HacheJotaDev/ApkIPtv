@@ -125,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo with gold glow
+                  // Transparent logo with gold glow
                   Container(
                     width: 100,
                     height: 100,
@@ -139,23 +139,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: Image.asset(
-                        'assets/logo.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
-                              ),
-                              borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
                             ),
-                            child: const Icon(Icons.play_circle_fill, size: 50, color: Color(0xFF1A1D30)),
-                          );
-                        },
-                      ),
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          child: const Icon(Icons.play_circle_fill, size: 50, color: Color(0xFF1A1D30)),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 18),

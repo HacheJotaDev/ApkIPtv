@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/iptv_provider.dart';
 import 'login_screen.dart';
 
@@ -131,7 +132,7 @@ class SettingsScreen extends StatelessWidget {
               _SettingsTile(
                 icon: Icons.info_outline,
                 title: 'Version',
-                subtitle: '1.0.0',
+                subtitle: '2.0.0',
               ),
               _SettingsTile(
                 icon: Icons.block_outlined,
@@ -173,6 +174,26 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              _SettingsTile(
+                icon: Icons.cast_outlined,
+                title: 'Transmision a TV',
+                subtitle: 'Usa el boton de cast en el reproductor',
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5C518).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.cast, color: Color(0xFFF5C518), size: 14),
+                      SizedBox(width: 4),
+                      Text('DISPONIBLE', style: TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
 
@@ -185,39 +206,37 @@ class SettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
+                    // Transparent logo
                     Container(
-                      width: 64,
-                      height: 64,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFFF5C518).withOpacity(0.3),
-                            blurRadius: 15,
-                            spreadRadius: 2,
+                            blurRadius: 20,
+                            spreadRadius: 3,
                           ),
                         ],
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          'assets/logo.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
-                                ),
-                                borderRadius: BorderRadius.all(Radius.circular(18)),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
                               ),
-                              child: const Icon(Icons.code, color: Color(0xFF1A1D30), size: 32),
-                            );
-                          },
-                        ),
+                              borderRadius: BorderRadius.all(Radius.circular(22)),
+                            ),
+                            child: const Icon(Icons.code, color: Color(0xFF1A1D30), size: 40),
+                          );
+                        },
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
                         colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
@@ -225,7 +244,7 @@ class SettingsScreen extends StatelessWidget {
                       child: const Text(
                         'HacheJota',
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           letterSpacing: 2,
@@ -236,6 +255,51 @@ class SettingsScreen extends StatelessWidget {
                     const Text(
                       'Desarrollador de Software',
                       style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 16),
+                    // Contact button - Telegram
+                    GestureDetector(
+                      onTap: () async {
+                        final uri = Uri.parse('https://t.me/@HcheJotaA_Bot');
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          // Fallback: try telegram directly
+                          final tgUri = Uri.parse('tg://resolve?domain=HcheJotaA_Bot');
+                          try {
+                            await launchUrl(tgUri);
+                          } catch (_) {
+                            debugPrint('Could not launch Telegram');
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0088CC), Color(0xFF006699)],
+                          ),
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0088CC).withOpacity(0.3),
+                              blurRadius: 12,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.send, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'Contactar en Telegram',
+                              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Container(
