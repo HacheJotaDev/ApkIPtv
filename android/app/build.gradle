@@ -27,7 +27,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.xtream.iptv"
-    compileSdk 34
+    compileSdkVersion 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -44,8 +44,8 @@ android {
 
     defaultConfig {
         applicationId "com.xtream.iptv"
-        minSdk 21
-        targetSdk 34
+        minSdkVersion 21
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -57,8 +57,6 @@ android {
             shrinkResources false
         }
     }
-
-    namespace 'com.xtream.iptv'
 }
 
 flutter {
