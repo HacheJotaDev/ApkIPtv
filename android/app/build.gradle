@@ -27,8 +27,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.xtream.iptv"
-    compileSdkVersion 34
-    buildToolsVersion "34.0.0"
+    compileSdk 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -45,11 +44,10 @@ android {
 
     defaultConfig {
         applicationId "com.xtream.iptv"
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdk 21
+        targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        multiDexEnabled true
     }
 
     buildTypes {
@@ -60,16 +58,11 @@ android {
         }
     }
 
-    lintOptions {
-        checkReleaseBuilds false
-        abortOnError false
-    }
+    namespace 'com.xtream.iptv'
 }
 
 flutter {
     source '../..'
 }
 
-dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
-}
+dependencies {}
