@@ -268,8 +268,10 @@ class SettingsScreen extends StatelessWidget {
                     context: context,
                     builder: (context) => AlertDialog(
                       backgroundColor: const Color(0xFF0f0f2e),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      border: Border.all(color: const Color(0xFF1a2a5e)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Color(0xFF1a2a5e)),
+                      ),
                       title: const Text('Cerrar sesion', style: TextStyle(color: Colors.white)),
                       content: const Text(
                         'Estas seguro de que quieres cerrar sesion?',
