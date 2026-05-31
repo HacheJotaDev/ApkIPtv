@@ -32,15 +32,33 @@ class _SeriesScreenState extends State<SeriesScreen> {
         title: _showSearch
             ? TextField(
                 controller: _searchController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
                 decoration: const InputDecoration(
                   hintText: 'Buscar series...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
+                autofocus: true,
                 onChanged: (v) => provider.setSearchQuery(v),
               )
-            : Text('Series (${provider.filteredSeriesList.length})'),
+            : Row(
+                children: [
+                  const Text('Series'),
+                  const SizedBox(width: 8),
+                  if (provider.filteredSeriesList.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00d4ff).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${provider.filteredSeriesList.length}',
+                        style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
         actions: [
           IconButton(
             icon: Icon(_showSearch ? Icons.close : Icons.search),
@@ -63,17 +81,26 @@ class _SeriesScreenState extends State<SeriesScreen> {
           ),
           Expanded(
             child: provider.isLoading
-                ? const Center(child: SpinKitThreeBounce(color: Color(0xFF00d4ff), size: 24))
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SpinKitThreeBounce(color: Color(0xFF00d4ff), size: 24),
+                        SizedBox(height: 16),
+                        Text('Cargando series...', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                      ],
+                    ),
+                  )
                 : provider.filteredSeriesList.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.tv_outlined, size: 64, color: Colors.grey),
+                            Icon(Icons.tv_outlined, size: 64, color: Colors.grey.shade600),
                             const SizedBox(height: 16),
                             const Text('No se encontraron series', style: TextStyle(color: Colors.grey, fontSize: 16)),
                             const SizedBox(height: 8),
-                            Text('${provider.seriesCategories.length} categorías disponibles',
+                            Text('${provider.seriesCategories.length} categorias disponibles',
                                 style: const TextStyle(color: Colors.grey, fontSize: 12)),
                           ],
                         ),
@@ -127,6 +154,14 @@ class _SeriesCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1a1a2e),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF1a2a4e), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
@@ -138,16 +173,16 @@ class _SeriesCard extends StatelessWidget {
                       imageUrl: series.logo,
                       fit: BoxFit.cover,
                       placeholder: (_, __) => Container(
-                        color: const Color(0xFF16213e),
+                        color: const Color(0xFF0f1a2e),
                         child: const Icon(Icons.tv, color: Color(0xFF00d4ff), size: 36),
                       ),
                       errorWidget: (_, __, ___) => Container(
-                        color: const Color(0xFF16213e),
+                        color: const Color(0xFF0f1a2e),
                         child: const Icon(Icons.tv, color: Color(0xFF00d4ff), size: 36),
                       ),
                     )
                   : Container(
-                      color: const Color(0xFF16213e),
+                      color: const Color(0xFF0f1a2e),
                       child: const Icon(Icons.tv, color: Color(0xFF00d4ff), size: 36),
                     ),
               Positioned(
@@ -190,12 +225,18 @@ class _SeriesCard extends StatelessWidget {
               ),
               Center(
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00d4ff).withOpacity(0.8),
+                    color: const Color(0xFF00d4ff).withOpacity(0.85),
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00d4ff).withOpacity(0.3),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 22),
                 ),
               ),
             ],

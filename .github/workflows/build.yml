@@ -25,124 +25,17 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Generate fresh Android config
-      run: |
-        cd /tmp
-        flutter create --org com.xtream --project-name xtream_iptv fresh_xtream
-
-    - name: Replace Android directory
-      run: |
-        rm -rf android
-        cp -r /tmp/fresh_xtream/android .
-
-        find android -type f | while read f; do
-          if file "$f" | grep -q text; then
-            sed -i 's/com\.xtream\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
-            sed -i 's/com\/xtream\/xtream_iptv/com\/xtream\/iptv/g' "$f" 2>/dev/null || true
-          fi
-        done
-
-        find android -type f | while read f; do
-          if file "$f" | grep -q text; then
-            sed -i -E 's/compileSdk(Version)?[ =]+[0-9]+/compileSdk = 36/g' "$f" 2>/dev/null || true
-            sed -i -E 's/targetSdk(Version)?[ =]+[0-9]+/targetSdk = 36/g' "$f" 2>/dev/null || true
-            sed -i -E 's/minSdk(Version)?[ =]+[0-9]+/minSdk = 21/g' "$f" 2>/dev/null || true
-          fi
-        done
-
-        find android -name "AndroidManifest.xml" | while read f; do
-          sed -i 's/xtream_iptv/XTREAM IPTV/g' "$f"
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' "$f"
-        done
-
-        mkdir -p android/app/src/main/kotlin/com/xtream/iptv
-        find android -name "MainActivity.kt" | while read f; do
-          cp "$f" android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-          sed -i 's/com\.xtream\.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
-        done
-        rm -rf android/app/src/main/kotlin/com/xtream/xtream_iptv
-        rm -rf android/app/src/main/kotlin/com/example
-
-    - name: Fix Gradle for third-party plugin compatibility
-      run: |
-        KOTLIN_VERSION=$(grep 'org.jetbrains.kotlin.android' android/settings.gradle | sed -nE "s/.*version ['\"]([^'\"]+)['\"].*/\1/p")
-        if [ -z "$KOTLIN_VERSION" ]; then
-          KOTLIN_VERSION="2.0.21"
-        fi
-        echo "Detected Kotlin version: $KOTLIN_VERSION"
-        {
-          echo "buildscript {"
-          echo "    ext.kotlin_version = '${KOTLIN_VERSION}'"
-          echo "    repositories {"
-          echo "        google()"
-          echo "        mavenCentral()"
-          echo "    }"
-          echo "    dependencies {"
-          echo '        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"'
-          echo "    }"
-          echo "}"
-          echo ""
-          echo "allprojects {"
-          echo "    repositories {"
-          echo "        google()"
-          echo "        mavenCentral()"
-          echo "    }"
-          echo "}"
-          echo ""
-          echo "rootProject.buildDir = '../build'"
-          echo ""
-          echo "// Apply Kotlin Android plugin to all subprojects BEFORE their build scripts"
-          echo "// This fixes Could not find method kotlin() in third-party plugins"
-          echo "gradle.beforeProject { project ->"
-          echo "    if (project.path != ':' && project.path != ':app') {"
-          echo "        project.pluginManager.apply('org.jetbrains.kotlin.android')"
-          echo "    }"
-          echo "}"
-          echo ""
-          echo "subprojects {"
-          echo '    project.buildDir = "${rootProject.buildDir}/${project.name}"'
-          echo "}"
-          echo ""
-          echo "subprojects {"
-          echo "    project.evaluationDependsOn(':app')"
-          echo "}"
-          echo ""
-          echo 'tasks.register("clean", Delete) {'
-          echo "    delete rootProject.buildDir"
-          echo "}"
-        } > android/build.gradle
-        echo "=== android/build.gradle ==="
-        cat android/build.gradle
+    - name: Ensure assets directory exists
+      run: mkdir -p assets
 
     - name: Install dependencies
       run: flutter pub get
 
     - name: Build APK
-      run: |
-        set -o pipefail
-        flutter build apk --release 2>&1 | tee build_log.txt
-
-    - name: Locate APK and upload
-      run: |
-        echo "Searching for APK files..."
-        find build -name "*.apk" -type f
-        APK_PATH=$(find build -name "app-release.apk" -type f | head -1)
-        if [ -z "$APK_PATH" ]; then
-          APK_PATH=$(find build -name "*.apk" -type f | head -1)
-        fi
-        if [ -n "$APK_PATH" ]; then
-          echo "Found APK at: $APK_PATH"
-          mkdir -p /tmp/apk_output
-          cp "$APK_PATH" /tmp/apk_output/xtream-iptv.apk
-          ls -la /tmp/apk_output/
-        else
-          echo "No APK found, checking build log..."
-          tail -50 build_log.txt
-          exit 1
-        fi
+      run: flutter build apk --release
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: xtream-iptv-apk
-        path: /tmp/apk_output/xtream-iptv.apk
+        path: build/app/outputs/flutter-apk/app-release.apk

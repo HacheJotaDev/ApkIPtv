@@ -12,11 +12,35 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _controller.forward();
     _tryAutoLogin();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _tryAutoLogin() async {
@@ -45,8 +69,8 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
               Color(0xFF0a0a0a),
               Color(0xFF1a1a2e),
@@ -55,56 +79,72 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00d4ff).withOpacity(0.3),
-                      blurRadius: 30,
-                      spreadRadius: 5,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 130,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF00d4ff), Color(0xFF0099cc), Color(0xFF0077aa)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00d4ff).withOpacity(0.4),
+                          blurRadius: 40,
+                          spreadRadius: 5,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.play_circle_fill,
-                  size: 70,
-                  color: Colors.white,
-                ),
+                    child: const Icon(
+                      Icons.play_circle_fill,
+                      size: 75,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'XTREAM IPTV',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00d4ff).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF00d4ff).withOpacity(0.3), width: 1),
+                    ),
+                    child: const Text(
+                      'Sin VIP \u2022 Sin Anuncios \u2022 100% Libre',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF00d4ff),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  const SpinKitThreeBounce(
+                    color: Color(0xFF00d4ff),
+                    size: 24,
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'XTREAM IPTV',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Sin VIP • Sin Anuncios',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF00d4ff),
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 48),
-              const SpinKitThreeBounce(
-                color: Color(0xFF00d4ff),
-                size: 24,
-              ),
-            ],
+            ),
           ),
         ),
       ),

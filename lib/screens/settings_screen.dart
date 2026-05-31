@@ -22,35 +22,35 @@ class SettingsScreen extends StatelessWidget {
             _SettingsCard(
               children: [
                 _SettingsTile(
-                  icon: Icons.person,
+                  icon: Icons.person_outline,
                   title: 'Usuario',
                   subtitle: provider.credentials?.username ?? 'N/A',
                 ),
                 _SettingsTile(
-                  icon: Icons.dns,
+                  icon: Icons.dns_outlined,
                   title: 'Servidor',
                   subtitle: provider.credentials?.baseUrl ?? 'N/A',
                 ),
                 _SettingsTile(
-                  icon: Icons.link,
-                  title: 'Conexión',
+                  icon: Icons.link_outlined,
+                  title: 'Conexion',
                   subtitle: provider.connectionType == 'xtream' ? 'Xtream Codes' : 'Lista M3U',
                 ),
                 if (provider.userInfo?['exp_date'] != null)
                   _SettingsTile(
-                    icon: Icons.calendar_today,
-                    title: 'Expiración',
+                    icon: Icons.calendar_today_outlined,
+                    title: 'Expiracion',
                     subtitle: _formatDate(provider.userInfo!['exp_date'].toString()),
                   ),
                 if (provider.userInfo?['max_connections'] != null)
                   _SettingsTile(
-                    icon: Icons.devices,
-                    title: 'Conexiones máximas',
+                    icon: Icons.devices_outlined,
+                    title: 'Conexiones maximas',
                     subtitle: provider.userInfo!['max_connections'].toString(),
                   ),
                 if (provider.userInfo?['active_cons'] != null)
                   _SettingsTile(
-                    icon: Icons.wifi,
+                    icon: Icons.wifi_outlined,
                     title: 'Conexiones activas',
                     subtitle: provider.userInfo!['active_cons'].toString(),
                   ),
@@ -64,56 +64,105 @@ class SettingsScreen extends StatelessWidget {
           _SettingsCard(
             children: [
               _SettingsTile(
-                icon: Icons.live_tv,
+                icon: Icons.live_tv_outlined,
                 title: 'Canales en vivo',
                 subtitle: '${provider.liveChannels.length} canales',
-                trailing: Text(
-                  '${provider.liveCategories.length} categorías',
-                  style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 12),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00d4ff).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${provider.liveCategories.length} cat.',
+                    style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
               _SettingsTile(
-                icon: Icons.movie,
-                title: 'Películas',
-                subtitle: '${provider.vodMovies.length} películas',
-                trailing: Text(
-                  '${provider.vodCategories.length} categorías',
-                  style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 12),
+                icon: Icons.movie_outlined,
+                title: 'Peliculas',
+                subtitle: '${provider.vodMovies.length} peliculas',
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00d4ff).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${provider.vodCategories.length} cat.',
+                    style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
               _SettingsTile(
-                icon: Icons.tv,
+                icon: Icons.tv_outlined,
                 title: 'Series',
                 subtitle: '${provider.seriesList.length} series',
-                trailing: Text(
-                  '${provider.seriesCategories.length} categorías',
-                  style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 12),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00d4ff).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${provider.seriesCategories.length} cat.',
+                    style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],
           ),
 
           // App info
-          _SectionHeader(title: 'Aplicación'),
+          _SectionHeader(title: 'Aplicacion'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
               _SettingsTile(
-                icon: Icons.info,
-                title: 'Versión',
+                icon: Icons.info_outline,
+                title: 'Version',
                 subtitle: '1.0.0',
               ),
               _SettingsTile(
-                icon: Icons.block,
+                icon: Icons.block_outlined,
                 title: 'Anuncios',
                 subtitle: 'Sin anuncios - Libre de publicidad',
-                trailing: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 14),
+                      SizedBox(width: 4),
+                      Text('ACTIVO', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
               ),
               _SettingsTile(
-                icon: Icons.verified,
+                icon: Icons.verified_outlined,
                 title: 'VIP',
                 subtitle: 'Sin restricciones - Todo desbloqueado',
-                trailing: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 14),
+                      SizedBox(width: 4),
+                      Text('ACTIVO', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -130,9 +179,10 @@ class SettingsScreen extends StatelessWidget {
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: const Color(0xFF1a1a2e),
-                    title: const Text('Cerrar sesión', style: TextStyle(color: Colors.white)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: const Text('Cerrar sesion', style: TextStyle(color: Colors.white)),
                     content: const Text(
-                      '¿Estás seguro de que quieres cerrar sesión?',
+                      'Estas seguro de que quieres cerrar sesion?',
                       style: TextStyle(color: Colors.white70),
                     ),
                     actions: [
@@ -142,7 +192,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Cerrar sesión', style: TextStyle(color: Colors.red)),
+                        child: const Text('Cerrar sesion', style: TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -157,10 +207,11 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.logout),
-              label: const Text('CERRAR SESIÓN'),
+              label: const Text('CERRAR SESION'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),

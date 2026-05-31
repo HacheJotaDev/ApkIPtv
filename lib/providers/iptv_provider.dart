@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/xtream_credentials.dart';
@@ -19,7 +20,7 @@ class IptvProvider extends ChangeNotifier {
   Map<String, dynamic>? get userInfo => _userInfo;
   bool _isAuthenticated = false;
   bool get isAuthenticated => _isAuthenticated;
-  String _connectionType = 'xtream'; // 'xtream' or 'm3u'
+  String _connectionType = 'xtream';
   String get connectionType => _connectionType;
 
   // Loading states
@@ -85,6 +86,11 @@ class IptvProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Test basic server connectivity before attempting login
+  Future<String> testServerConnection(String serverUrl) async {
+    return await _xtreamService.testConnection(serverUrl);
+  }
+
   // Auth methods
   Future<bool> loginWithXtream(String server, String username, String password) async {
     _isLoading = true;
@@ -93,6 +99,16 @@ class IptvProvider extends ChangeNotifier {
 
     try {
       final creds = XtreamCredentials(server: server, username: username, password: password);
+
+      // First test connectivity
+      final connResult = await _xtreamService.testConnection(creds.baseUrl);
+      if (connResult != 'ok') {
+        _errorMessage = connResult;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
       final data = await _xtreamService.authenticate(creds);
       if (data != null) {
         _credentials = creds;
@@ -110,8 +126,23 @@ class IptvProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       }
+    } on SocketException catch (e) {
+      _errorMessage = 'Sin conexion a internet. Verifica tu red. (${e.message})';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on HandshakeException catch (e) {
+      _errorMessage = 'Error de certificado SSL. Intenta usar HTTP en lugar de HTTPS. (${e.message})';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on FormatException catch (e) {
+      _errorMessage = 'URL del servidor invalida. Verifica el formato. (${e.message})';
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
-      _errorMessage = 'Error de conexión: $e';
+      _errorMessage = 'Error de conexion: $e';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -125,7 +156,16 @@ class IptvProvider extends ChangeNotifier {
 
     try {
       final content = await _xtreamService.getM3uPlaylist(url);
-      if (content != null && content.isNotEmpty) {
+      if (content != null && content.trim().isNotEmpty) {
+        // Check if it looks like an M3U file
+        final trimmedContent = content.trim();
+        if (!trimmedContent.startsWith('#EXTM3U') && !trimmedContent.startsWith('#EXTINF')) {
+          _errorMessage = 'El contenido no parece ser una lista M3U valida. Verifica la URL.';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+
         final parsed = M3uParser.parseM3u(content);
         _liveChannels = List<Channel>.from(parsed['channels']);
         _vodMovies = List<Movie>.from(parsed['movies']);
@@ -138,11 +178,26 @@ class IptvProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'No se pudo cargar la lista M3U';
+        _errorMessage = 'No se pudo cargar la lista M3U. Verifica la URL y tu conexion.';
         _isLoading = false;
         notifyListeners();
         return false;
       }
+    } on SocketException catch (e) {
+      _errorMessage = 'Sin conexion a internet. Verifica tu red. (${e.message})';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on HandshakeException catch (e) {
+      _errorMessage = 'Error de certificado SSL. Intenta usar HTTP en lugar de HTTPS. (${e.message})';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on FormatException catch (e) {
+      _errorMessage = 'URL de la lista M3U invalida. Verifica el formato. (${e.message})';
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       _errorMessage = 'Error al cargar M3U: $e';
       _isLoading = false;
@@ -154,7 +209,7 @@ class IptvProvider extends ChangeNotifier {
   Future<void> _loadAllContent() async {
     if (_credentials == null) return;
 
-    // Load categories
+    // Load categories first
     _liveCategories = await _xtreamService.getLiveCategories(_credentials!);
     _vodCategories = await _xtreamService.getVodCategories(_credentials!);
     _seriesCategories = await _xtreamService.getSeriesCategories(_credentials!);
@@ -272,6 +327,7 @@ class IptvProvider extends ChangeNotifier {
     _selectedVodCategory = null;
     _selectedSeriesCategory = null;
     _searchQuery = '';
+    _xtreamService.dispose();
     notifyListeners();
   }
 }

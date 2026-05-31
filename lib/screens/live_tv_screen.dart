@@ -32,15 +32,33 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
         title: _showSearch
             ? TextField(
                 controller: _searchController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
                 decoration: const InputDecoration(
                   hintText: 'Buscar canales...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
+                autofocus: true,
                 onChanged: (v) => provider.setSearchQuery(v),
               )
-            : const Text('TV en Vivo'),
+            : Row(
+                children: [
+                  const Text('TV en Vivo'),
+                  const SizedBox(width: 8),
+                  if (provider.filteredLiveChannels.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00d4ff).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${provider.filteredLiveChannels.length}',
+                        style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
         actions: [
           IconButton(
             icon: Icon(_showSearch ? Icons.close : Icons.search),
@@ -67,14 +85,21 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
           Expanded(
             child: provider.isLoading
                 ? const Center(
-                    child: SpinKitThreeBounce(color: Color(0xFF00d4ff), size: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SpinKitThreeBounce(color: Color(0xFF00d4ff), size: 24),
+                        SizedBox(height: 16),
+                        Text('Cargando canales...', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                      ],
+                    ),
                   )
                 : provider.filteredLiveChannels.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.tv_off, size: 64, color: Colors.grey),
+                            Icon(Icons.tv_off, size: 64, color: Colors.grey.shade600),
                             const SizedBox(height: 16),
                             const Text(
                               'No se encontraron canales',
@@ -82,7 +107,7 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '${provider.liveCategories.length} categorías disponibles',
+                              '${provider.liveCategories.length} categorias disponibles',
                               style: const TextStyle(color: Colors.grey, fontSize: 12),
                             ),
                           ],
@@ -141,7 +166,14 @@ class _ChannelCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1a1a2e),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF16213e), width: 1),
+          border: Border.all(color: const Color(0xFF1a2a4e), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -181,16 +213,32 @@ class _ChannelCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: const BoxDecoration(
-                color: Color(0xFF00d4ff),
+                gradient: LinearGradient(
+                  colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
+                ),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
                 ),
               ),
-              child: const Text(
-                'EN VIVO',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'EN VIVO',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ),
           ],

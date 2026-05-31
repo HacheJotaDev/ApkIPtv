@@ -3,10 +3,17 @@ import '../models/movie.dart';
 import '../models/category.dart';
 
 class M3uParser {
-  static const Map<String, String> _groupMap = {};
-
   static Map<String, dynamic> parseM3u(String content) {
-    final lines = content.split('\n');
+    // Remove BOM if present
+    String cleanContent = content;
+    if (cleanContent.startsWith('\uFEFF')) {
+      cleanContent = cleanContent.substring(1);
+    }
+
+    // Normalize line endings
+    cleanContent = cleanContent.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+
+    final lines = cleanContent.split('\n');
     final List<Channel> channels = [];
     final List<Movie> movies = [];
     final List<Category> categories = [];
@@ -37,12 +44,12 @@ class M3uParser {
         }
       } else if (line.isNotEmpty && !line.startsWith('#') && currentName != null) {
         final url = line;
-        final group = currentGroup ?? 'Sin categoría';
+        final group = currentGroup ?? 'Sin categoria';
         final isVod = _isVodUrl(url) || _isVodGroup(group);
 
         if (isVod) {
           movies.add(Movie.fromM3u({
-            'id': currentId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            'id': currentId ?? '${DateTime.now().millisecondsSinceEpoch}_${movies.length}',
             'name': currentName,
             'group': group,
             'url': url,
@@ -50,7 +57,7 @@ class M3uParser {
           }));
         } else {
           channels.add(Channel.fromM3u({
-            'id': currentId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            'id': currentId ?? '${DateTime.now().millisecondsSinceEpoch}_${channels.length}',
             'name': currentName,
             'group': group,
             'url': url,
@@ -96,13 +103,15 @@ class M3uParser {
         lower.endsWith('.mkv') ||
         lower.endsWith('.avi') ||
         lower.endsWith('.flv') ||
-        lower.endsWith('.mov');
+        lower.endsWith('.mov') ||
+        lower.endsWith('.ts') && lower.contains('/movie/');
   }
 
   static bool _isVodGroup(String group) {
     final lower = group.toLowerCase();
     return lower.contains('vod') ||
         lower.contains('pelicula') ||
+        lower.contains('peli') ||
         lower.contains('movie') ||
         lower.contains('film') ||
         lower.contains('cinema') ||

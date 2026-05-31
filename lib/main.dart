@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
 import 'providers/iptv_provider.dart';
@@ -7,6 +8,21 @@ import 'screens/splash_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+
+  // Lock orientation to portrait for better UX on phones
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
+  // Set status bar style
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => IptvProvider(),
@@ -43,6 +59,7 @@ class XtreamIPTVApp extends StatelessWidget {
           selectedItemColor: Color(0xFF00d4ff),
           unselectedItemColor: Colors.grey,
           type: BottomNavigationBarType.fixed,
+          elevation: 8,
         ),
         cardTheme: CardThemeData(
           color: const Color(0xFF1a1a2e),
@@ -59,10 +76,18 @@ class XtreamIPTVApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF16213e),
+          fillColor: const Color(0xFF0f1a2e),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF1a2a4e), width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF00d4ff), width: 1.5),
           ),
           hintStyle: const TextStyle(color: Colors.grey),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

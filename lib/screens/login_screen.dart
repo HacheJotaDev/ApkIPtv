@@ -51,12 +51,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showError(provider.errorMessage);
     }
   }
 
@@ -70,13 +65,37 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showError(provider.errorMessage);
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red.shade800,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -85,8 +104,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [Color(0xFF0a0a0a), Color(0xFF1a1a2e), Color(0xFF16213e)],
           ),
         ),
@@ -97,63 +116,107 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo
+                  // Logo with glow animation
                   Container(
-                    width: 90,
-                    height: 90,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF00d4ff), Color(0xFF0099cc), Color(0xFF0077aa)],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00d4ff).withOpacity(0.3),
-                          blurRadius: 20,
+                          color: const Color(0xFF00d4ff).withOpacity(0.4),
+                          blurRadius: 25,
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.play_circle_fill, size: 50, color: Colors.white),
+                    child: const Icon(Icons.play_circle_fill, size: 55, color: Colors.white),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   const Text(
                     'XTREAM IPTV',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 2),
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 3,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Conecta tu servicio IPTV',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00d4ff).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF00d4ff).withOpacity(0.3), width: 1),
+                    ),
+                    child: const Text(
+                      'Sin VIP \u2022 Sin Anuncios \u2022 100% Libre',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF00d4ff),
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 36),
 
                   // Tab Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF16213e),
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFF0f1a2e),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF1a2a4e), width: 1),
                     ),
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: const Color(0xFF00d4ff),
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
+                        ),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
-                      labelColor: Colors.black,
+                      labelColor: Colors.white,
                       unselectedLabelColor: Colors.grey,
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       tabs: const [
-                        Tab(text: 'Xtream Codes'),
-                        Tab(text: 'Lista M3U'),
+                        Tab(
+                          height: 42,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.login, size: 16),
+                              SizedBox(width: 6),
+                              Text('Xtream Codes'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          height: 42,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.playlist_play, size: 16),
+                              SizedBox(width: 6),
+                              Text('Lista M3U'),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
                   // Tab Views
                   SizedBox(
-                    height: 320,
+                    height: 340,
                     child: TabBarView(
                       controller: _tabController,
                       children: [
@@ -162,55 +225,42 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           key: _xtreamFormKey,
                           child: Column(
                             children: [
-                              TextFormField(
+                              _buildInputField(
                                 controller: _serverController,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: const InputDecoration(
-                                  hintText: 'http://servidor.com:puerto',
-                                  prefixIcon: Icon(Icons.dns, color: Color(0xFF00d4ff)),
-                                ),
+                                hintText: 'http://servidor.com:puerto',
+                                prefixIcon: Icons.dns_outlined,
                                 validator: (v) => v!.isEmpty ? 'Ingresa el servidor' : null,
                               ),
-                              const SizedBox(height: 16),
-                              TextFormField(
+                              const SizedBox(height: 14),
+                              _buildInputField(
                                 controller: _usernameController,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: const InputDecoration(
-                                  hintText: 'Nombre de usuario',
-                                  prefixIcon: Icon(Icons.person, color: Color(0xFF00d4ff)),
-                                ),
+                                hintText: 'Nombre de usuario',
+                                prefixIcon: Icons.person_outline,
                                 validator: (v) => v!.isEmpty ? 'Ingresa el usuario' : null,
                               ),
-                              const SizedBox(height: 16),
-                              TextFormField(
+                              const SizedBox(height: 14),
+                              _buildInputField(
                                 controller: _passwordController,
+                                hintText: 'Contraseña',
+                                prefixIcon: Icons.lock_outline,
                                 obscureText: _obscurePassword,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  hintText: 'Contraseña',
-                                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF00d4ff)),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                      color: Colors.grey,
-                                    ),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                    color: Colors.grey,
+                                    size: 20,
                                   ),
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
                                 validator: (v) => v!.isEmpty ? 'Ingresa la contraseña' : null,
                               ),
                               const SizedBox(height: 24),
                               Consumer<IptvProvider>(
                                 builder: (_, provider, __) {
-                                  return SizedBox(
-                                    width: double.infinity,
-                                    height: 50,
-                                    child: ElevatedButton(
-                                      onPressed: provider.isLoading ? null : _loginXtream,
-                                      child: provider.isLoading
-                                          ? const SpinKitThreeBounce(color: Colors.black, size: 20)
-                                          : const Text('CONECTAR'),
-                                    ),
+                                  return _buildConnectButton(
+                                    onPressed: provider.isLoading ? null : _loginXtream,
+                                    isLoading: provider.isLoading,
+                                    label: 'CONECTAR',
                                   );
                                 },
                               ),
@@ -223,31 +273,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           key: _m3uFormKey,
                           child: Column(
                             children: [
-                              TextFormField(
+                              _buildInputField(
                                 controller: _m3uController,
-                                style: const TextStyle(color: Colors.white),
-                                maxLines: 3,
-                                decoration: const InputDecoration(
-                                  hintText: 'Pega aquí la URL de tu lista M3U',
-                                  prefixIcon: Padding(
-                                    padding: EdgeInsets.only(bottom: 40),
-                                    child: Icon(Icons.link, color: Color(0xFF00d4ff)),
-                                  ),
-                                ),
+                                hintText: 'Pega aqui la URL de tu lista M3U',
+                                prefixIcon: Icons.link_outlined,
+                                maxLines: 4,
                                 validator: (v) => v!.isEmpty ? 'Ingresa la URL M3U' : null,
                               ),
                               const SizedBox(height: 24),
                               Consumer<IptvProvider>(
                                 builder: (_, provider, __) {
-                                  return SizedBox(
-                                    width: double.infinity,
-                                    height: 50,
-                                    child: ElevatedButton(
-                                      onPressed: provider.isLoading ? null : _loginM3u,
-                                      child: provider.isLoading
-                                          ? const SpinKitThreeBounce(color: Colors.black, size: 20)
-                                          : const Text('CARGAR LISTA'),
-                                    ),
+                                  return _buildConnectButton(
+                                    onPressed: provider.isLoading ? null : _loginM3u,
+                                    isLoading: provider.isLoading,
+                                    label: 'CARGAR LISTA',
                                   );
                                 },
                               ),
@@ -261,6 +300,105 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData prefixIcon,
+    int maxLines = 1,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white, fontSize: 14),
+      obscureText: obscureText,
+      maxLines: maxLines,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+        prefixIcon: Padding(
+          padding: EdgeInsets.only(bottom: maxLines > 1 ? 40 : 0),
+          child: Icon(prefixIcon, color: const Color(0xFF00d4ff), size: 20),
+        ),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: const Color(0xFF0f1a2e),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF1a2a4e), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF00d4ff), width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
+  Widget _buildConnectButton({
+    required VoidCallback? onPressed,
+    required bool isLoading,
+    required String label,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: onPressed != null
+              ? const LinearGradient(
+                  colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
+                )
+              : null,
+          boxShadow: onPressed != null
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF00d4ff).withOpacity(0.3),
+                    blurRadius: 15,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+          ),
+          child: isLoading
+              ? const SpinKitThreeBounce(color: Colors.white, size: 20)
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.power_settings_new, size: 20),
+                    const SizedBox(width: 8),
+                    Text(label),
+                  ],
+                ),
         ),
       ),
     );
