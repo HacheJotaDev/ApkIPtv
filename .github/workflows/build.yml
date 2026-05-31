@@ -34,14 +34,14 @@ jobs:
       run: |
         rm -rf android
         cp -r /tmp/fresh_xtream/android .
-        
+
         find android -type f | while read f; do
           if file "$f" | grep -q text; then
             sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
             sed -i 's/com\/example\/xtream_iptv/com\/xtream\/iptv/g' "$f" 2>/dev/null || true
           fi
         done
-        
+
         find android -type f | while read f; do
           if file "$f" | grep -q text; then
             sed -i -E 's/compileSdk(Version)?[ =]+[0-9]+/compileSdk = 36/g' "$f" 2>/dev/null || true
@@ -49,18 +49,71 @@ jobs:
             sed -i -E 's/minSdk(Version)?[ =]+[0-9]+/minSdk = 21/g' "$f" 2>/dev/null || true
           fi
         done
-        
+
         find android -name "AndroidManifest.xml" | while read f; do
           sed -i 's/xtream_iptv/XTREAM IPTV/g' "$f"
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' "$f"
         done
-        
+
         mkdir -p android/app/src/main/kotlin/com/xtream/iptv
         find android -name "MainActivity.kt" | while read f; do
           cp "$f" android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
           sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/' android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
         done
         rm -rf android/app/src/main/kotlin/com/example
+
+    - name: Fix Gradle for third-party plugin compatibility
+      run: |
+        # Extract the Kotlin version from the generated settings.gradle
+        KOTLIN_VERSION=$(grep 'org.jetbrains.kotlin.android' android/settings.gradle | sed -E "s/.*version '([^']+)'.*/\1/")
+        echo "Detected Kotlin version: $KOTLIN_VERSION"
+
+        # Rewrite android/build.gradle with Kotlin classpath and beforeProject hook
+        cat > android/build.gradle << EOF
+buildscript {
+    ext.kotlin_version = '${KOTLIN_VERSION}'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+
+// Apply Kotlin Android plugin to all subprojects BEFORE their build scripts are evaluated.
+// This fixes "Could not find method kotlin()" errors in third-party plugins like
+// screen_brightness_android that use project.kotlin { } DSL in their build.gradle.
+gradle.beforeProject { project ->
+    if (project.path != ':' && project.path != ':app') {
+        project.pluginManager.apply('org.jetbrains.kotlin.android')
+    }
+}
+
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
+EOF
+
+        echo "=== android/build.gradle ==="
+        cat android/build.gradle
 
     - name: Install dependencies
       run: flutter pub get
