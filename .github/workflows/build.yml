@@ -35,7 +35,6 @@ jobs:
         rm -rf android
         cp -r /tmp/fresh_xtream/android .
         
-        # Fix package names in all text files
         find android -type f | while read f; do
           if file "$f" | grep -q text; then
             sed -i 's/com\.example\.xtream_iptv/com.xtream.iptv/g' "$f" 2>/dev/null || true
@@ -43,7 +42,6 @@ jobs:
           fi
         done
         
-        # Update SDK versions
         find android -type f | while read f; do
           if file "$f" | grep -q text; then
             sed -i -E 's/compileSdk(Version)?[ =]+[0-9]+/compileSdk = 36/g' "$f" 2>/dev/null || true
@@ -52,13 +50,11 @@ jobs:
           fi
         done
         
-        # Fix AndroidManifest
         find android -name "AndroidManifest.xml" | while read f; do
           sed -i 's/xtream_iptv/XTREAM IPTV/g' "$f"
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' "$f"
         done
         
-        # Fix MainActivity
         mkdir -p android/app/src/main/kotlin/com/xtream/iptv
         find android -name "MainActivity.kt" | while read f; do
           cp "$f" android/app/src/main/kotlin/com/xtream/iptv/MainActivity.kt
@@ -70,26 +66,26 @@ jobs:
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release 2>&1 | tee build_log.txt
+      run: flutter build apk --release
 
-    - name: Find APK files
-      if: always()
-      run: find build -name "*.apk" -type f 2>/dev/null || echo "No APK found"
+    - name: Locate and copy APK
+      run: |
+        echo "Searching for APK files..."
+        find build -name "*.apk" -type f
+        APK_PATH=$(find build -name "app-release.apk" -type f | head -1)
+        if [ -n "$APK_PATH" ]; then
+          echo "Found APK at: $APK_PATH"
+          mkdir -p /tmp/apk_output
+          cp "$APK_PATH" /tmp/apk_output/xtream-iptv.apk
+          echo "APK copied to /tmp/apk_output/xtream-iptv.apk"
+          ls -la /tmp/apk_output/
+        else
+          echo "ERROR: No APK found!"
+          exit 1
+        fi
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
-      if: always()
       with:
         name: xtream-iptv-apk
-        path: |
-          build/app/outputs/flutter-apk/app-release.apk
-          build/app/outputs/apk/release/app-release.apk
-          build/app/outputs/apk/release/*.apk
-          build/app/outputs/flutter-apk/*.apk
-
-    - name: Upload build log
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-log
-        path: build_log.txt
+        path: /tmp/apk_output/xtream-iptv.apk
