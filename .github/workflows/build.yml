@@ -64,54 +64,49 @@ jobs:
 
     - name: Fix Gradle for third-party plugin compatibility
       run: |
-        # Extract the Kotlin version from the generated settings.gradle
         KOTLIN_VERSION=$(grep 'org.jetbrains.kotlin.android' android/settings.gradle | sed -E "s/.*version '([^']+)'.*/\1/")
         echo "Detected Kotlin version: $KOTLIN_VERSION"
-
-        # Rewrite android/build.gradle with Kotlin classpath and beforeProject hook
-        cat > android/build.gradle << EOF
-buildscript {
-    ext.kotlin_version = '${KOTLIN_VERSION}'
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.buildDir = '../build'
-
-// Apply Kotlin Android plugin to all subprojects BEFORE their build scripts are evaluated.
-// This fixes "Could not find method kotlin()" errors in third-party plugins like
-// screen_brightness_android that use project.kotlin { } DSL in their build.gradle.
-gradle.beforeProject { project ->
-    if (project.path != ':' && project.path != ':app') {
-        project.pluginManager.apply('org.jetbrains.kotlin.android')
-    }
-}
-
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-
-subprojects {
-    project.evaluationDependsOn(':app')
-}
-
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
-EOF
-
+        {
+          echo "buildscript {"
+          echo "    ext.kotlin_version = '${KOTLIN_VERSION}'"
+          echo "    repositories {"
+          echo "        google()"
+          echo "        mavenCentral()"
+          echo "    }"
+          echo "    dependencies {"
+          echo '        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"'
+          echo "    }"
+          echo "}"
+          echo ""
+          echo "allprojects {"
+          echo "    repositories {"
+          echo "        google()"
+          echo "        mavenCentral()"
+          echo "    }"
+          echo "}"
+          echo ""
+          echo "rootProject.buildDir = '../build'"
+          echo ""
+          echo "// Apply Kotlin Android plugin to all subprojects BEFORE their build scripts"
+          echo "// This fixes Could not find method kotlin() in third-party plugins"
+          echo "gradle.beforeProject { project ->"
+          echo "    if (project.path != ':' && project.path != ':app') {"
+          echo "        project.pluginManager.apply('org.jetbrains.kotlin.android')"
+          echo "    }"
+          echo "}"
+          echo ""
+          echo "subprojects {"
+          echo '    project.buildDir = "${rootProject.buildDir}/${project.name}"'
+          echo "}"
+          echo ""
+          echo "subprojects {"
+          echo "    project.evaluationDependsOn(':app')"
+          echo "}"
+          echo ""
+          echo 'tasks.register("clean", Delete) {'
+          echo "    delete rootProject.buildDir"
+          echo "}"
+        } > android/build.gradle
         echo "=== android/build.gradle ==="
         cat android/build.gradle
 
