@@ -32,25 +32,6 @@ jobs:
       run: |
         cd /tmp
         flutter create --org com.xtream --project-name xtream_iptv fresh_xtream
-        
-        # Print generated files for debugging
-        echo "====== GENERATED settings.gradle ======"
-        cat /tmp/fresh_xtream/android/settings.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/settings.gradle.kts
-        echo ""
-        echo "====== GENERATED app build.gradle ======"
-        cat /tmp/fresh_xtream/android/app/build.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/app/build.gradle.kts
-        echo ""
-        echo "====== GENERATED root build.gradle ======"
-        cat /tmp/fresh_xtream/android/build.gradle 2>/dev/null || cat /tmp/fresh_xtream/android/build.gradle.kts
-        echo ""
-        echo "====== GENERATED gradle-wrapper.properties ======"
-        cat /tmp/fresh_xtream/android/gradle/wrapper/gradle-wrapper.properties
-        echo ""
-        echo "====== GENERATED AndroidManifest.xml ======"
-        cat /tmp/fresh_xtream/android/app/src/main/AndroidManifest.xml
-        echo ""
-        echo "====== GENERATED MainActivity ======"
-        find /tmp/fresh_xtream/android -name "MainActivity.*" -exec cat {} \;
 
     - name: Replace Android files
       run: |
@@ -87,11 +68,30 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
 
-    - name: Build APK
-      run: flutter build apk --release
+    - name: Try build and capture error
+      run: |
+        flutter build apk --release 2>&1 | tee /tmp/build_output.txt
+      continue-on-error: true
 
-    - name: Upload APK
+    - name: Upload build log on failure
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: /tmp/build_output.txt
+
+    - name: Upload APK on success
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: xtream-iptv-apk
         path: build/app/outputs/flutter-apk/app-release.apk
+
+    - name: Check if build succeeded
+      run: |
+        if grep -q "BUILD FAILED" /tmp/build_output.txt || grep -q "Gradle task assembleRelease failed" /tmp/build_output.txt; then
+          echo "BUILD FAILED - uploading log for diagnosis"
+          echo "=== Error summary ==="
+          grep -i "error\|fail\|what went wrong" /tmp/build_output.txt | head -20
+          exit 1
+        fi
