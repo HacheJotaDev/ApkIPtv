@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0a0a1e),
+          color: const Color(0xFF121421),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.5),
@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ],
           border: Border(
             top: BorderSide(
-              color: const Color(0xFF1a2a5e).withOpacity(0.3),
+              color: const Color(0xFF2A2D4A).withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -150,8 +150,8 @@ class _NavButton extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            splashColor: const Color(0xFF00b0ff).withOpacity(0.3),
-            highlightColor: const Color(0xFF00b0ff).withOpacity(0.1),
+            splashColor: const Color(0xFFF5C518).withOpacity(0.3),
+            highlightColor: const Color(0xFFF5C518).withOpacity(0.1),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
@@ -161,7 +161,7 @@ class _NavButton extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF00b0ff).withOpacity(0.15)
+                    ? const Color(0xFFF5C518).withOpacity(0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -176,7 +176,7 @@ class _NavButton extends StatelessWidget {
                         child: Icon(
                           isSelected ? item.activeIcon : item.icon,
                           key: ValueKey(isSelected),
-                          color: isSelected ? const Color(0xFF00b0ff) : Colors.grey.shade500,
+                          color: isSelected ? const Color(0xFFF5C518) : Colors.grey.shade500,
                           size: 24,
                         ),
                       ),
@@ -187,14 +187,14 @@ class _NavButton extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00b0ff),
+                              color: const Color(0xFFF5C518),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             constraints: const BoxConstraints(minWidth: 14),
                             child: Text(
                               count > 99 ? '99+' : '$count',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Color(0xFF1A1D30), fontSize: 8, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -204,7 +204,7 @@ class _NavButton extends StatelessWidget {
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 250),
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFF00b0ff) : Colors.grey.shade500,
+                      color: isSelected ? const Color(0xFFF5C518) : Colors.grey.shade500,
                       fontSize: isSelected ? 11 : 10,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
@@ -242,12 +242,12 @@ class _RippleIndicator extends AnimatedWidget {
       width: 20 * progress,
       height: 3,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF00e5ff), Color(0xFF0066ff)]),
+        gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFE5A000)]),
         borderRadius: BorderRadius.circular(2),
         boxShadow: progress < 1.0
             ? [
                 BoxShadow(
-                  color: const Color(0xFF00b0ff).withOpacity(0.5 * (1 - progress)),
+                  color: const Color(0xFFF5C518).withOpacity(0.5 * (1 - progress)),
                   blurRadius: 8 * (1 - progress),
                   spreadRadius: 2 * (1 - progress),
                 ),

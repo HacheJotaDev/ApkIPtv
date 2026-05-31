@@ -49,12 +49,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00b0ff).withOpacity(0.2),
+                        color: const Color(0xFFF5C518).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '${provider.filteredSeriesList.length}',
-                        style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: Color(0xFFF5C518), fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                 ],
@@ -85,7 +85,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SpinKitThreeBounce(color: Color(0xFF00b0ff), size: 24),
+                        SpinKitThreeBounce(color: Color(0xFFF5C518), size: 24),
                         SizedBox(height: 16),
                         Text('Cargando series...', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
@@ -100,9 +100,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0f0f2e),
+                                color: const Color(0xFF1A1D30),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+                                border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
                               ),
                               child: Icon(Icons.tv_outlined, size: 40, color: Colors.grey.shade600),
                             ),
@@ -116,7 +116,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                       )
                     : RefreshIndicator(
                         onRefresh: () => provider.selectSeriesCategory(provider.selectedSeriesCategory),
-                        color: const Color(0xFF00b0ff),
+                        color: const Color(0xFFF5C518),
                         child: GridView.builder(
                           padding: const EdgeInsets.all(12),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -165,10 +165,10 @@ class _SeriesCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0f0f2e),
+          color: const Color(0xFF1A1D30),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFF1a2a5e).withOpacity(0.5),
+            color: const Color(0xFF2A2D4A).withOpacity(0.5),
             width: 1,
           ),
           boxShadow: [
@@ -189,17 +189,17 @@ class _SeriesCard extends StatelessWidget {
                       imageUrl: series.logo,
                       fit: BoxFit.cover,
                       placeholder: (_, __) => Container(
-                        color: const Color(0xFF0a0f2e),
-                        child: const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
+                        color: const Color(0xFF131630),
+                        child: const Icon(Icons.tv, color: Color(0xFFF5C518), size: 36),
                       ),
                       errorWidget: (_, __, ___) => Container(
-                        color: const Color(0xFF0a0f2e),
-                        child: const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
+                        color: const Color(0xFF131630),
+                        child: const Icon(Icons.tv, color: Color(0xFFF5C518), size: 36),
                       ),
                     )
                   : Container(
-                      color: const Color(0xFF0a0f2e),
-                      child: const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
+                      color: const Color(0xFF131630),
+                      child: const Icon(Icons.tv, color: Color(0xFFF5C518), size: 36),
                     ),
               Positioned(
                 left: 0,
@@ -227,9 +227,9 @@ class _SeriesCard extends StatelessWidget {
                       if (series.rating.isNotEmpty)
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 12),
+                            const Icon(Icons.star, color: Color(0xFFF5C518), size: 12),
                             const SizedBox(width: 2),
-                            Text(series.rating, style: const TextStyle(color: Colors.amber, fontSize: 10)),
+                            Text(series.rating, style: const TextStyle(color: Color(0xFFF5C518), fontSize: 10)),
                           ],
                         ),
                     ],
@@ -240,16 +240,16 @@ class _SeriesCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)]),
+                    gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF00b0ff).withOpacity(0.4),
+                        color: const Color(0xFFF5C518).withOpacity(0.4),
                         blurRadius: 12,
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 22),
+                  child: const Icon(Icons.play_arrow, color: Color(0xFF1A1D30), size: 22),
                 ),
               ),
             ],

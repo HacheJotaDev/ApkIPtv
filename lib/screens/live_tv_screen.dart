@@ -50,12 +50,12 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00b0ff).withOpacity(0.2),
+                        color: const Color(0xFFF5C518).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '${provider.filteredLiveChannels.length}',
-                        style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: Color(0xFFF5C518), fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                 ],
@@ -91,7 +91,7 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SpinKitThreeBounce(color: Color(0xFF00b0ff), size: 24),
+                        SpinKitThreeBounce(color: Color(0xFFF5C518), size: 24),
                         SizedBox(height: 16),
                         Text('Cargando canales...', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
@@ -105,7 +105,7 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
                       )
                     : RefreshIndicator(
                         onRefresh: () => provider.selectLiveCategory(provider.selectedLiveCategory),
-                        color: const Color(0xFF00b0ff),
+                        color: const Color(0xFFF5C518),
                         child: _isGridView
                             ? _buildGridView(provider)
                             : _buildListView(provider),
@@ -177,10 +177,10 @@ class _ChannelGridCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0f0f2e),
+          color: const Color(0xFF1A1D30),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFF1a2a5e).withOpacity(0.5),
+            color: const Color(0xFF2A2D4A).withOpacity(0.5),
             width: 1,
           ),
           boxShadow: [
@@ -202,10 +202,10 @@ class _ChannelGridCard extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: channel.logo,
                         fit: BoxFit.contain,
-                        placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
-                        errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
+                        placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFFF5C518), size: 36),
+                        errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFFF5C518), size: 36),
                       )
-                    : const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
+                    : const Icon(Icons.tv, color: Color(0xFFF5C518), size: 36),
               ),
             ),
             Expanded(
@@ -226,7 +226,7 @@ class _ChannelGridCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                  colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
                 ),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(14),
@@ -245,7 +245,7 @@ class _ChannelGridCard extends StatelessWidget {
                   const Text(
                     'EN VIVO',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF1A1D30), fontSize: 9, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -274,10 +274,10 @@ class _ChannelListTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF0f0f2e),
+            color: const Color(0xFF1A1D30),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFF1a2a5e).withOpacity(0.5),
+              color: const Color(0xFF2A2D4A).withOpacity(0.5),
               width: 1,
             ),
           ),
@@ -289,14 +289,14 @@ class _ChannelListTile extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                    colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   '${index + 1}',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Color(0xFF1A1D30), fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 12),
@@ -305,7 +305,7 @@ class _ChannelListTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1a1a3e),
+                  color: const Color(0xFF1E2038),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: channel.logo.isNotEmpty
@@ -314,11 +314,11 @@ class _ChannelListTile extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: channel.logo,
                           fit: BoxFit.contain,
-                          placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 22),
-                          errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 22),
+                          placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFFF5C518), size: 22),
+                          errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFFF5C518), size: 22),
                         ),
                       )
-                    : const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 22),
+                    : const Icon(Icons.tv, color: Color(0xFFF5C518), size: 22),
               ),
               const SizedBox(width: 12),
               // Name
@@ -367,7 +367,7 @@ class _ChannelListTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.play_circle_fill, color: Color(0xFF00b0ff), size: 28),
+              const Icon(Icons.play_circle_fill, color: Color(0xFFF5C518), size: 28),
             ],
           ),
         ),
@@ -393,9 +393,9 @@ class _EmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF0f0f2e),
+              color: const Color(0xFF1A1D30),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+              border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
             ),
             child: Icon(icon, size: 40, color: Colors.grey.shade600),
           ),

@@ -54,13 +54,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                           imageUrl: widget.series.logo,
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
-                            color: const Color(0xFF0f0f2e),
-                            child: const Icon(Icons.tv, size: 64, color: Color(0xFF00b0ff)),
+                            color: const Color(0xFF1A1D30),
+                            child: const Icon(Icons.tv, size: 64, color: Color(0xFFF5C518)),
                           ),
                         )
                       : Container(
-                          color: const Color(0xFF0f0f2e),
-                          child: const Icon(Icons.tv, size: 64, color: Color(0xFF00b0ff)),
+                          color: const Color(0xFF1A1D30),
+                          child: const Icon(Icons.tv, size: 64, color: Color(0xFFF5C518)),
                         ),
                   Container(
                     decoration: const BoxDecoration(
@@ -81,7 +81,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0a0a1e), Color(0xFF050510)],
+                  colors: [Color(0xFF121421), Color(0xFF0C0E1A)],
                 ),
               ),
               child: Padding(
@@ -99,9 +99,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                       runSpacing: 8,
                       children: [
                         if (widget.series.rating.isNotEmpty)
-                          _InfoChip(icon: Icons.star, label: widget.series.rating, color: Colors.amber),
+                          _InfoChip(icon: Icons.star, label: widget.series.rating, color: const Color(0xFFF5C518)),
                         if (widget.series.releaseDate.isNotEmpty)
-                          _InfoChip(icon: Icons.calendar_today, label: widget.series.releaseDate, color: const Color(0xFF00b0ff)),
+                          _InfoChip(icon: Icons.calendar_today, label: widget.series.releaseDate, color: const Color(0xFFF5C518)),
                         if (widget.series.genre.isNotEmpty)
                           _InfoChip(icon: Icons.category, label: widget.series.genre, color: Colors.purple),
                       ],
@@ -113,9 +113,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0f0f2e),
+                          color: const Color(0xFF1A1D30),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+                          border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
                         ),
                         child: Text(
                           widget.series.description,
@@ -127,7 +127,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
 
                     // Episodes section
                     if (_isLoading)
-                      const Center(child: SpinKitThreeBounce(color: Color(0xFF00b0ff), size: 24))
+                      const Center(child: SpinKitThreeBounce(color: Color(0xFFF5C518), size: 24))
                     else if (_seriesInfo != null && _seriesInfo!.seasons.isNotEmpty) ...[
                       Row(
                         children: [
@@ -136,12 +136,12 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00b0ff).withOpacity(0.15),
+                              color: const Color(0xFFF5C518).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               '${_seriesInfo!.seasons.length}',
-                              style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 12, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Color(0xFFF5C518), fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -162,13 +162,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                                 label: Text('T$seasonNum'),
                                 selected: isSelected,
                                 onSelected: (_) => setState(() => _selectedSeason = int.parse(seasonNum)),
-                                selectedColor: const Color(0xFF00b0ff),
-                                backgroundColor: const Color(0xFF0f0f2e),
+                                selectedColor: const Color(0xFFF5C518),
+                                backgroundColor: const Color(0xFF1A1D30),
                                 side: BorderSide(
-                                  color: isSelected ? const Color(0xFF00b0ff) : const Color(0xFF1a2a5e),
+                                  color: isSelected ? const Color(0xFFF5C518) : const Color(0xFF2A2D4A),
                                 ),
                                 labelStyle: TextStyle(
-                                  color: isSelected ? Colors.black : Colors.white,
+                                  color: isSelected ? const Color(0xFF1A1D30) : Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -188,7 +188,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0f0f2e),
+                                color: const Color(0xFF1A1D30),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: const Icon(Icons.tv_off, color: Colors.grey, size: 30),
@@ -240,9 +240,9 @@ class _EpisodeTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF0f0f2e),
+            color: const Color(0xFF1A1D30),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+            border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
           ),
           child: Row(
             children: [
@@ -250,10 +250,10 @@ class _EpisodeTile extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)]),
+                  gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.play_circle, color: Colors.white, size: 24),
+                child: const Icon(Icons.play_circle, color: Color(0xFF1A1D30), size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -273,7 +273,7 @@ class _EpisodeTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.play_arrow, color: Color(0xFF00b0ff)),
+              const Icon(Icons.play_arrow, color: Color(0xFFF5C518)),
             ],
           ),
         ),

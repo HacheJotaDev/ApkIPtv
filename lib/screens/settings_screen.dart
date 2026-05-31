@@ -17,7 +17,7 @@ class SettingsScreen extends StatelessWidget {
         children: [
           // Account info
           if (provider.userInfo != null) ...[
-            _SectionHeader(title: 'Cuenta'),
+            const _SectionHeader(title: 'Cuenta'),
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
@@ -27,7 +27,7 @@ class SettingsScreen extends StatelessWidget {
                     server: provider.credentials!.baseUrl,
                     connectionType: provider.connectionType,
                   ),
-                  const Divider(color: Color(0xFF1a2a5e), height: 1),
+                  const Divider(color: Color(0xFF2A2D4A), height: 1),
                 ],
                 _SettingsTile(
                   icon: Icons.link_outlined,
@@ -36,12 +36,12 @@ class SettingsScreen extends StatelessWidget {
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00b0ff).withOpacity(0.15),
+                      color: const Color(0xFFF5C518).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
                       'ACTIVO',
-                      style: TextStyle(color: Color(0xFF00b0ff), fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Color(0xFFF5C518), fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -68,7 +68,7 @@ class SettingsScreen extends StatelessWidget {
           ],
 
           // Content stats
-          _SectionHeader(title: 'Contenido'),
+          const _SectionHeader(title: 'Contenido'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -79,12 +79,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00b0ff).withOpacity(0.15),
+                    color: const Color(0xFFF5C518).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.liveCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFFF5C518), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -95,12 +95,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00b0ff).withOpacity(0.15),
+                    color: const Color(0xFFF5C518).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.vodCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFFF5C518), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -111,12 +111,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00b0ff).withOpacity(0.15),
+                    color: const Color(0xFFF5C518).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.seriesCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFFF5C518), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -124,7 +124,7 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           // App info
-          _SectionHeader(title: 'Aplicacion'),
+          const _SectionHeader(title: 'Aplicacion'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -177,7 +177,7 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           // HacheJota Developer Credit
-          _SectionHeader(title: 'Desarrollador'),
+          const _SectionHeader(title: 'Desarrollador'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -190,14 +190,9 @@ class SettingsScreen extends StatelessWidget {
                       height: 64,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF00e5ff), Color(0xFF0066ff)],
-                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF00b0ff).withOpacity(0.3),
+                            color: const Color(0xFFF5C518).withOpacity(0.3),
                             blurRadius: 15,
                             spreadRadius: 2,
                           ),
@@ -205,25 +200,27 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(18),
-                        child: Padding(
-                          padding: const EdgeInsets.all(2),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.asset(
-                              'assets/logo.jpg',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.code, color: Colors.white, size: 32);
-                              },
-                            ),
-                          ),
+                        child: Image.asset(
+                          'assets/logo.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
+                                ),
+                                borderRadius: BorderRadius.all(Radius.circular(18)),
+                              ),
+                              child: const Icon(Icons.code, color: Color(0xFF1A1D30), size: 32),
+                            );
+                          },
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFF00e5ff), Color(0xFF0066ff)],
+                        colors: [Color(0xFFFFD700), Color(0xFFE5A000)],
                       ).createShader(bounds),
                       child: const Text(
                         'HacheJota',
@@ -244,18 +241,18 @@ class SettingsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00b0ff).withOpacity(0.1),
+                        color: const Color(0xFFF5C518).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF00b0ff).withOpacity(0.2)),
+                        border: Border.all(color: const Color(0xFFF5C518).withOpacity(0.2)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.favorite, color: Color(0xFF00b0ff), size: 14),
+                          Icon(Icons.favorite, color: Color(0xFFF5C518), size: 14),
                           SizedBox(width: 6),
                           Text(
                             'Hecho con dedicacion',
-                            style: TextStyle(color: Color(0xFF00b0ff), fontSize: 12),
+                            style: TextStyle(color: Color(0xFFF5C518), fontSize: 12),
                           ),
                         ],
                       ),
@@ -282,10 +279,10 @@ class SettingsScreen extends StatelessWidget {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      backgroundColor: const Color(0xFF0f0f2e),
+                      backgroundColor: const Color(0xFF1A1D30),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: Color(0xFF1a2a5e)),
+                        side: const BorderSide(color: Color(0xFF2A2D4A)),
                       ),
                       title: const Text('Cerrar sesion', style: TextStyle(color: Colors.white)),
                       content: const Text(
@@ -368,17 +365,17 @@ class _ProfileHeader extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
               ),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF00b0ff).withOpacity(0.3),
+                  color: const Color(0xFFF5C518).withOpacity(0.3),
                   blurRadius: 10,
                 ),
               ],
             ),
-            child: const Icon(Icons.person, color: Colors.white, size: 28),
+            child: const Icon(Icons.person, color: Color(0xFF1A1D30), size: 28),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -416,7 +413,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFF00b0ff),
+          color: Color(0xFFF5C518),
           fontSize: 14,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
@@ -434,9 +431,9 @@ class _SettingsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0f0f2e),
+        color: const Color(0xFF1A1D30),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFF2A2D4A).withOpacity(0.5)),
       ),
       child: Column(children: children),
     );
@@ -463,10 +460,10 @@ class _SettingsTile extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: const Color(0xFF00b0ff).withOpacity(0.1),
+          color: const Color(0xFFF5C518).withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: const Color(0xFF00b0ff), size: 20),
+        child: Icon(icon, color: const Color(0xFFF5C518), size: 20),
       ),
       title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),

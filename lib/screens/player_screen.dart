@@ -210,12 +210,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                        colors: [Color(0xFFF5C518), Color(0xFFE5A000)],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00b0ff).withOpacity(0.5),
+                          color: const Color(0xFFF5C518).withOpacity(0.5),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
@@ -223,7 +223,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                     child: Icon(
                       _isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: Colors.white,
+                      color: const Color(0xFF1A1D30),
                       size: 52,
                     ),
                   ),
@@ -254,10 +254,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           data: SliderThemeData(
                             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
                             trackShape: const CustomTrackShape(),
-                            overlayColor: const Color(0xFF00b0ff).withOpacity(0.2),
-                            activeTrackColor: const Color(0xFF00b0ff),
+                            overlayColor: const Color(0xFFF5C518).withOpacity(0.2),
+                            activeTrackColor: const Color(0xFFF5C518),
                             inactiveTrackColor: Colors.white24,
-                            thumbColor: const Color(0xFF00b0ff),
+                            thumbColor: const Color(0xFFF5C518),
                           ),
                           child: Slider(
                             value: _duration.inMilliseconds > 0
@@ -310,7 +310,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   padding: const EdgeInsets.all(28),
                   margin: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0a0a1e),
+                    color: const Color(0xFF121421),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
                     boxShadow: [
@@ -347,7 +347,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
-                              gradient: const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)]),
+                              gradient: const LinearGradient(colors: [Color(0xFFF5C518), Color(0xFFE5A000)]),
                             ),
                             child: ElevatedButton.icon(
                               onPressed: () {
@@ -360,7 +360,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
-                                foregroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF1A1D30),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                               icon: const Icon(Icons.refresh, size: 18),
