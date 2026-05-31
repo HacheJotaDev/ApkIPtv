@@ -48,7 +48,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const HomeScreen(),
+          transitionDuration: const Duration(milliseconds: 500),
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       );
     } else {
       _showError(provider.errorMessage);
@@ -62,7 +68,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const HomeScreen(),
+          transitionDuration: const Duration(milliseconds: 500),
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       );
     } else {
       _showError(provider.errorMessage);
@@ -77,10 +89,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             const Icon(Icons.error_outline, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 13),
-              ),
+              child: Text(message, style: const TextStyle(fontSize: 13)),
             ),
           ],
         ),
@@ -106,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0a0a0a), Color(0xFF1a1a2e), Color(0xFF16213e)],
+            colors: [Color(0xFF050510), Color(0xFF0a0a2e), Color(0xFF101040)],
           ),
         ),
         child: SafeArea(
@@ -116,32 +125,32 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo with glow animation
+                  // Logo with glow
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 90,
+                    height: 90,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF00d4ff), Color(0xFF0099cc), Color(0xFF0077aa)],
+                        colors: [Color(0xFF00e5ff), Color(0xFF00b0ff), Color(0xFF0066ff)],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00d4ff).withOpacity(0.4),
-                          blurRadius: 25,
-                          spreadRadius: 2,
+                          color: const Color(0xFF00b0ff).withOpacity(0.4),
+                          blurRadius: 30,
+                          spreadRadius: 3,
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.play_circle_fill, size: 55, color: Colors.white),
+                    child: const Icon(Icons.play_circle_fill, size: 50, color: Colors.white),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   const Text(
                     'XTREAM IPTV',
                     style: TextStyle(
-                      fontSize: 30,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: 3,
@@ -151,34 +160,30 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00d4ff).withOpacity(0.15),
+                      color: const Color(0xFF00b0ff).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF00d4ff).withOpacity(0.3), width: 1),
+                      border: Border.all(color: const Color(0xFF00b0ff).withOpacity(0.2), width: 1),
                     ),
                     child: const Text(
                       'Sin VIP \u2022 Sin Anuncios \u2022 100% Libre',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF00d4ff),
-                        letterSpacing: 1,
-                      ),
+                      style: TextStyle(fontSize: 10, color: Color(0xFF00b0ff), letterSpacing: 1),
                     ),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 32),
 
                   // Tab Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0f1a2e),
+                      color: const Color(0xFF0a0f2e),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFF1a2a4e), width: 1),
+                      border: Border.all(color: const Color(0xFF1a2a5e), width: 1),
                     ),
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
+                          colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
                         ),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
@@ -212,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ],
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
                   // Tab Views
                   SizedBox(
@@ -241,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               const SizedBox(height: 14),
                               _buildInputField(
                                 controller: _passwordController,
-                                hintText: 'Contraseña',
+                                hintText: 'Contrase\u00f1a',
                                 prefixIcon: Icons.lock_outline,
                                 obscureText: _obscurePassword,
                                 suffixIcon: IconButton(
@@ -252,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   ),
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
-                                validator: (v) => v!.isEmpty ? 'Ingresa la contraseña' : null,
+                                validator: (v) => v!.isEmpty ? 'Ingresa la contrase\u00f1a' : null,
                               ),
                               const SizedBox(height: 24),
                               Consumer<IptvProvider>(
@@ -296,6 +301,35 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+
+                  // HacheJota credit
+                  Opacity(
+                    opacity: 0.4,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'by ',
+                          style: TextStyle(color: Colors.white38, fontSize: 12),
+                        ),
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFF00e5ff), Color(0xFF0066ff)],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'HacheJota',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -324,23 +358,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         hintText: hintText,
         hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
         prefixIcon: Padding(
-          padding: EdgeInsets.only(bottom: maxLines > 1 ? 40 : 0),
-          child: Icon(prefixIcon, color: const Color(0xFF00d4ff), size: 20),
+          padding: EdgeInsets.only(bottom: maxLines > 1 ? 50 : 0),
+          child: Icon(prefixIcon, color: const Color(0xFF00b0ff), size: 20),
         ),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFF0f1a2e),
+        fillColor: const Color(0xFF0a0f2e),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1a2a4e), width: 1),
+          borderSide: const BorderSide(color: Color(0xFF1a2a5e), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF00d4ff), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF00b0ff), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -363,14 +397,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           gradient: onPressed != null
-              ? const LinearGradient(
-                  colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
-                )
+              ? const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)])
               : null,
           boxShadow: onPressed != null
               ? [
                   BoxShadow(
-                    color: const Color(0xFF00d4ff).withOpacity(0.3),
+                    color: const Color(0xFF00b0ff).withOpacity(0.3),
                     blurRadius: 15,
                     spreadRadius: 1,
                   ),
@@ -384,9 +416,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             shadowColor: Colors.transparent,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
           ),
           child: isLoading
@@ -394,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.power_settings_new, size: 20),
+                    const Icon(Icons.power_settings_new, size: 20),
                     const SizedBox(width: 8),
                     Text(label),
                   ],

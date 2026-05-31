@@ -21,20 +21,29 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _SettingsCard(
               children: [
-                _SettingsTile(
-                  icon: Icons.person_outline,
-                  title: 'Usuario',
-                  subtitle: provider.credentials?.username ?? 'N/A',
-                ),
-                _SettingsTile(
-                  icon: Icons.dns_outlined,
-                  title: 'Servidor',
-                  subtitle: provider.credentials?.baseUrl ?? 'N/A',
-                ),
+                if (provider.credentials != null) ...[
+                  _ProfileHeader(
+                    username: provider.credentials!.username,
+                    server: provider.credentials!.baseUrl,
+                    connectionType: provider.connectionType,
+                  ),
+                  const Divider(color: Color(0xFF1a2a5e), height: 1),
+                ],
                 _SettingsTile(
                   icon: Icons.link_outlined,
                   title: 'Conexion',
                   subtitle: provider.connectionType == 'xtream' ? 'Xtream Codes' : 'Lista M3U',
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00b0ff).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'ACTIVO',
+                      style: TextStyle(color: Color(0xFF00b0ff), fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
                 if (provider.userInfo?['exp_date'] != null)
                   _SettingsTile(
@@ -70,12 +79,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00d4ff).withOpacity(0.15),
+                    color: const Color(0xFF00b0ff).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.liveCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -86,12 +95,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00d4ff).withOpacity(0.15),
+                    color: const Color(0xFF00b0ff).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.vodCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -102,12 +111,12 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00d4ff).withOpacity(0.15),
+                    color: const Color(0xFF00b0ff).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${provider.seriesCategories.length} cat.',
-                    style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -167,54 +176,144 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
 
+          // HacheJota Developer Credit
+          _SectionHeader(title: 'Desarrollador'),
+          const SizedBox(height: 8),
+          _SettingsCard(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF00e5ff), Color(0xFF0066ff)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00b0ff).withOpacity(0.3),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.code, color: Colors.white, size: 32),
+                    ),
+                    const SizedBox(height: 12),
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFF00e5ff), Color(0xFF0066ff)],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'HacheJota',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Desarrollador de Software',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00b0ff).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF00b0ff).withOpacity(0.2)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.favorite, color: Color(0xFF00b0ff), size: 14),
+                          SizedBox(width: 6),
+                          Text(
+                            'Hecho con dedicacion',
+                            style: TextStyle(color: Color(0xFF00b0ff), fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 24),
 
           // Logout
           SizedBox(
             width: double.infinity,
-            height: 50,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    backgroundColor: const Color(0xFF1a1a2e),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    title: const Text('Cerrar sesion', style: TextStyle(color: Colors.white)),
-                    content: const Text(
-                      'Estas seguro de que quieres cerrar sesion?',
-                      style: TextStyle(color: Colors.white70),
+            height: 52,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.red.withOpacity(0.4), width: 1),
+              ),
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: const Color(0xFF0f0f2e),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      border: Border.all(color: const Color(0xFF1a2a5e)),
+                      title: const Text('Cerrar sesion', style: TextStyle(color: Colors.white)),
+                      content: const Text(
+                        'Estas seguro de que quieres cerrar sesion?',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancelar'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Cerrar sesion', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancelar'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Cerrar sesion', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirm == true && context.mounted) {
-                  await provider.logout();
-                  if (context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
+                  );
+                  if (confirm == true && context.mounted) {
+                    await provider.logout();
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        PageRouteBuilder(
+                          pageBuilder: (_, __, ___) => const LoginScreen(),
+                          transitionDuration: const Duration(milliseconds: 400),
+                          transitionsBuilder: (_, animation, __, child) {
+                            return FadeTransition(opacity: animation, child: child);
+                          },
+                        ),
+                      );
+                    }
                   }
-                }
-              },
-              icon: const Icon(Icons.logout),
-              label: const Text('CERRAR SESION'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text('CERRAR SESION'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.transparent),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
               ),
             ),
           ),
+
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -230,6 +329,65 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+class _ProfileHeader extends StatelessWidget {
+  final String username;
+  final String server;
+  final String connectionType;
+
+  const _ProfileHeader({
+    required this.username,
+    required this.server,
+    required this.connectionType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00b0ff).withOpacity(0.3),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: const Icon(Icons.person, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  username,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  server.replaceAll('http://', '').replaceAll('https://', ''),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
@@ -241,7 +399,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFF00d4ff),
+          color: Color(0xFF00b0ff),
           fontSize: 14,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
@@ -257,7 +415,12 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0f0f2e),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+      ),
       child: Column(children: children),
     );
   }
@@ -279,7 +442,15 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF00d4ff)),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFF00b0ff).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: const Color(0xFF00b0ff), size: 20),
+      ),
       title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
       trailing: trailing,

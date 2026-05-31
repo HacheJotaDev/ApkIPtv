@@ -16,6 +16,7 @@ class LiveTvScreen extends StatefulWidget {
 class _LiveTvScreenState extends State<LiveTvScreen> {
   final _searchController = TextEditingController();
   bool _showSearch = false;
+  bool _isGridView = true;
 
   @override
   void dispose() {
@@ -49,17 +50,22 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00d4ff).withOpacity(0.2),
+                        color: const Color(0xFF00b0ff).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '${provider.filteredLiveChannels.length}',
-                        style: const TextStyle(color: Color(0xFF00d4ff), fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                 ],
               ),
         actions: [
+          IconButton(
+            icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
+            onPressed: () => setState(() => _isGridView = !_isGridView),
+            tooltip: _isGridView ? 'Vista lista' : 'Vista cuadricula',
+          ),
           IconButton(
             icon: Icon(_showSearch ? Icons.close : Icons.search),
             onPressed: () {
@@ -74,104 +80,114 @@ class _LiveTvScreenState extends State<LiveTvScreen> {
       ),
       body: Column(
         children: [
-          // Category filter
           CategoryFilter(
             categories: provider.liveCategories,
             selectedCategoryId: provider.selectedLiveCategory,
             onCategorySelected: (id) => provider.selectLiveCategory(id),
           ),
-
-          // Channel list
           Expanded(
             child: provider.isLoading
                 ? const Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SpinKitThreeBounce(color: Color(0xFF00d4ff), size: 24),
+                        SpinKitThreeBounce(color: Color(0xFF00b0ff), size: 24),
                         SizedBox(height: 16),
                         Text('Cargando canales...', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
                     ),
                   )
                 : provider.filteredLiveChannels.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.tv_off, size: 64, color: Colors.grey.shade600),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'No se encontraron canales',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '${provider.liveCategories.length} categorias disponibles',
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
-                          ],
-                        ),
+                    ? _EmptyState(
+                        icon: Icons.tv_off,
+                        title: 'No se encontraron canales',
+                        subtitle: '${provider.liveCategories.length} categorias disponibles',
                       )
                     : RefreshIndicator(
                         onRefresh: () => provider.selectLiveCategory(provider.selectedLiveCategory),
-                        color: const Color(0xFF00d4ff),
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            childAspectRatio: 0.85,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                          ),
-                          itemCount: provider.filteredLiveChannels.length,
-                          itemBuilder: (context, index) {
-                            final channel = provider.filteredLiveChannels[index];
-                            return _ChannelCard(
-                              channel: channel,
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => PlayerScreen(
-                                      title: channel.name,
-                                      url: channel.streamUrl,
-                                      type: 'live',
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
+                        color: const Color(0xFF00b0ff),
+                        child: _isGridView
+                            ? _buildGridView(provider)
+                            : _buildListView(provider),
                       ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildGridView(IptvProvider provider) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: provider.filteredLiveChannels.length,
+      itemBuilder: (context, index) {
+        final channel = provider.filteredLiveChannels[index];
+        return _ChannelGridCard(
+          channel: channel,
+          onTap: () => _openPlayer(context, channel.name, channel.streamUrl),
+        );
+      },
+    );
+  }
+
+  Widget _buildListView(IptvProvider provider) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: provider.filteredLiveChannels.length,
+      itemBuilder: (context, index) {
+        final channel = provider.filteredLiveChannels[index];
+        return _ChannelListTile(
+          channel: channel,
+          index: index,
+          onTap: () => _openPlayer(context, channel.name, channel.streamUrl),
+        );
+      },
+    );
+  }
+
+  void _openPlayer(BuildContext context, String title, String url) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => PlayerScreen(title: title, url: url, type: 'live'),
+        transitionDuration: const Duration(milliseconds: 300),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
 }
 
-class _ChannelCard extends StatelessWidget {
+class _ChannelGridCard extends StatelessWidget {
   final dynamic channel;
   final VoidCallback onTap;
 
-  const _ChannelCard({required this.channel, required this.onTap});
+  const _ChannelGridCard({required this.channel, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1a1a2e),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF1a2a4e), width: 1),
+          color: const Color(0xFF0f0f2e),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF1a2a5e).withOpacity(0.5),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -186,10 +202,10 @@ class _ChannelCard extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: channel.logo,
                         fit: BoxFit.contain,
-                        placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFF00d4ff), size: 36),
-                        errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFF00d4ff), size: 36),
+                        placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
+                        errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
                       )
-                    : const Icon(Icons.tv, color: Color(0xFF00d4ff), size: 36),
+                    : const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 36),
               ),
             ),
             Expanded(
@@ -201,11 +217,7 @@ class _ChannelCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -214,11 +226,11 @@ class _ChannelCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF00d4ff), Color(0xFF0099cc)],
+                  colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
                 ),
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(14),
+                  bottomRight: Radius.circular(14),
                 ),
               ),
               child: Row(
@@ -227,10 +239,7 @@ class _ChannelCard extends StatelessWidget {
                   Container(
                     width: 5,
                     height: 5,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 4),
                   const Text(
@@ -243,6 +252,158 @@ class _ChannelCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ChannelListTile extends StatelessWidget {
+  final dynamic channel;
+  final int index;
+  final VoidCallback onTap;
+
+  const _ChannelListTile({required this.channel, required this.index, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0f0f2e),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF1a2a5e).withOpacity(0.5),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Channel number
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Logo
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1a1a3e),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: channel.logo.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CachedNetworkImage(
+                          imageUrl: channel.logo,
+                          fit: BoxFit.contain,
+                          placeholder: (_, __) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 22),
+                          errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 22),
+                        ),
+                      )
+                    : const Icon(Icons.tv, color: Color(0xFF00b0ff), size: 22),
+              ),
+              const SizedBox(width: 12),
+              // Name
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      channel.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    if (channel.categoryId.isNotEmpty)
+                      Text(
+                        channel.categoryId,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                      ),
+                  ],
+                ),
+              ),
+              // Live badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.red.withOpacity(0.4), width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'LIVE',
+                      style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.play_circle_fill, color: Color(0xFF00b0ff), size: 28),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _EmptyState({required this.icon, required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0f0f2e),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+            ),
+            child: Icon(icon, size: 40, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 16),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        ],
       ),
     );
   }

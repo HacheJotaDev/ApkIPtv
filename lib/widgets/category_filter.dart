@@ -32,8 +32,11 @@ class CategoryFilter extends StatelessWidget {
                 label: const Text('Todos'),
                 selected: selectedCategoryId == null,
                 onSelected: (_) => onCategorySelected(null),
-                selectedColor: const Color(0xFF00d4ff),
-                backgroundColor: const Color(0xFF16213e),
+                selectedColor: const Color(0xFF00b0ff),
+                backgroundColor: const Color(0xFF0f0f2e),
+                side: BorderSide(
+                  color: selectedCategoryId == null ? const Color(0xFF00b0ff) : const Color(0xFF1a2a5e),
+                ),
                 labelStyle: TextStyle(
                   color: selectedCategoryId == null ? Colors.black : Colors.white,
                   fontWeight: FontWeight.w600,
@@ -53,8 +56,11 @@ class CategoryFilter extends StatelessWidget {
               ),
               selected: isSelected,
               onSelected: (_) => onCategorySelected(isSelected ? null : category.id),
-              selectedColor: const Color(0xFF00d4ff),
-              backgroundColor: const Color(0xFF16213e),
+              selectedColor: const Color(0xFF00b0ff),
+              backgroundColor: const Color(0xFF0f0f2e),
+              side: BorderSide(
+                color: isSelected ? const Color(0xFF00b0ff) : const Color(0xFF1a2a5e),
+              ),
               labelStyle: TextStyle(
                 color: isSelected ? Colors.black : Colors.white,
                 fontWeight: FontWeight.w600,

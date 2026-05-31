@@ -17,7 +17,7 @@ class MovieDetailScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 320,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -28,13 +28,13 @@ class MovieDetailScreen extends StatelessWidget {
                           imageUrl: movie.logo,
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
-                            color: const Color(0xFF1a1a2e),
-                            child: const Icon(Icons.movie, size: 64, color: Color(0xFF00d4ff)),
+                            color: const Color(0xFF0f0f2e),
+                            child: const Icon(Icons.movie, size: 64, color: Color(0xFF00b0ff)),
                           ),
                         )
                       : Container(
-                          color: const Color(0xFF1a1a2e),
-                          child: const Icon(Icons.movie, size: 64, color: Color(0xFF00d4ff)),
+                          color: const Color(0xFF0f0f2e),
+                          child: const Icon(Icons.movie, size: 64, color: Color(0xFF00b0ff)),
                         ),
                   Container(
                     decoration: const BoxDecoration(
@@ -45,24 +45,24 @@ class MovieDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // Play button overlay
                   Center(
                     child: GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => PlayerScreen(
-                              title: movie.name,
-                              url: movie.streamUrl,
-                              type: 'movie',
-                            ),
-                          ),
-                        );
-                      },
+                      onTap: () => _playMovie(context),
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00d4ff).withOpacity(0.9),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                          ),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00b0ff).withOpacity(0.5),
+                              blurRadius: 25,
+                              spreadRadius: 3,
+                            ),
+                          ],
                         ),
                         child: const Icon(Icons.play_arrow, color: Colors.white, size: 48),
                       ),
@@ -73,80 +73,115 @@ class MovieDetailScreen extends StatelessWidget {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.name,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  const SizedBox(height: 12),
-                  // Info row
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      if (movie.rating.isNotEmpty)
-                        _InfoChip(icon: Icons.star, label: movie.rating, color: Colors.amber),
-                      if (movie.releaseDate.isNotEmpty)
-                        _InfoChip(icon: Icons.calendar_today, label: movie.releaseDate, color: Colors.blue),
-                      if (movie.duration.isNotEmpty)
-                        _InfoChip(icon: Icons.schedule, label: movie.duration, color: Colors.green),
-                      if (movie.genre.isNotEmpty)
-                        _InfoChip(icon: Icons.category, label: movie.genre, color: Colors.purple),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Play button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => PlayerScreen(
-                              title: movie.name,
-                              url: movie.streamUrl,
-                              type: 'movie',
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('REPRODUCIR'),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Description
-                  if (movie.description.isNotEmpty) ...[
-                    const Text(
-                      'Sinopsis',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    const SizedBox(height: 8),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0a0a1e), Color(0xFF050510)],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      movie.description,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      movie.name,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
+                    const SizedBox(height: 12),
+                    // Info chips
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: [
+                        if (movie.rating.isNotEmpty)
+                          _InfoChip(icon: Icons.star, label: movie.rating, color: Colors.amber),
+                        if (movie.releaseDate.isNotEmpty)
+                          _InfoChip(icon: Icons.calendar_today, label: movie.releaseDate, color: const Color(0xFF00b0ff)),
+                        if (movie.duration.isNotEmpty)
+                          _InfoChip(icon: Icons.schedule, label: movie.duration, color: Colors.green),
+                        if (movie.genre.isNotEmpty)
+                          _InfoChip(icon: Icons.category, label: movie.genre, color: Colors.purple),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Play button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)]),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00b0ff).withOpacity(0.3),
+                              blurRadius: 15,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _playMovie(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          ),
+                          icon: const Icon(Icons.play_arrow, size: 24),
+                          label: const Text('REPRODUCIR'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Description
+                    if (movie.description.isNotEmpty) ...[
+                      const Text('Sinopsis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0f0f2e),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+                        ),
+                        child: Text(
+                          movie.description,
+                          style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
+                        ),
+                      ),
+                    ],
+                    if (movie.director.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _InfoRow(icon: Icons.person, label: 'Director', value: movie.director),
+                    ],
+                    if (movie.cast.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _InfoRow(icon: Icons.group, label: 'Reparto', value: movie.cast),
+                    ],
+                    const SizedBox(height: 32),
                   ],
-                  if (movie.director.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Text('Director: ${movie.director}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                  ],
-                  if (movie.cast.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text('Reparto: ${movie.cast}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _playMovie(BuildContext context) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => PlayerScreen(title: movie.name, url: movie.streamUrl, type: 'movie'),
+        transitionDuration: const Duration(milliseconds: 300),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
       ),
     );
   }
@@ -164,9 +199,9 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -176,6 +211,32 @@ class _InfoChip extends StatelessWidget {
           Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: const Color(0xFF00b0ff), size: 18),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w500)),
+            Text(value, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -43,7 +43,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 280,
+            expandedHeight: 300,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -54,13 +54,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                           imageUrl: widget.series.logo,
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
-                            color: const Color(0xFF1a1a2e),
-                            child: const Icon(Icons.tv, size: 64, color: Color(0xFF00d4ff)),
+                            color: const Color(0xFF0f0f2e),
+                            child: const Icon(Icons.tv, size: 64, color: Color(0xFF00b0ff)),
                           ),
                         )
                       : Container(
-                          color: const Color(0xFF1a1a2e),
-                          child: const Icon(Icons.tv, size: 64, color: Color(0xFF00d4ff)),
+                          color: const Color(0xFF0f0f2e),
+                          child: const Icon(Icons.tv, size: 64, color: Color(0xFF00b0ff)),
                         ),
                   Container(
                     decoration: const BoxDecoration(
@@ -76,78 +76,132 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.series.name,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      if (widget.series.rating.isNotEmpty)
-                        _InfoChip(icon: Icons.star, label: widget.series.rating, color: Colors.amber),
-                      if (widget.series.releaseDate.isNotEmpty)
-                        _InfoChip(icon: Icons.calendar_today, label: widget.series.releaseDate, color: Colors.blue),
-                      if (widget.series.genre.isNotEmpty)
-                        _InfoChip(icon: Icons.category, label: widget.series.genre, color: Colors.purple),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (widget.series.description.isNotEmpty) ...[
-                    const Text('Sinopsis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 8),
-                    Text(widget.series.description, style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
-                  ],
-                  const SizedBox(height: 24),
-
-                  // Episodes
-                  if (_isLoading)
-                    const Center(child: SpinKitThreeBounce(color: Color(0xFF00d4ff), size: 24))
-                  else if (_seriesInfo != null && _seriesInfo!.seasons.isNotEmpty) ...[
-                    const Text('Temporadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF0a0a1e), Color(0xFF050510)],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.series.name,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
                     const SizedBox(height: 12),
-                    // Season selector
-                    SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _seriesInfo!.seasons.keys.length,
-                        itemBuilder: (context, index) {
-                          final seasonNum = _seriesInfo!.seasons.keys.elementAt(index);
-                          final isSelected = seasonNum == _selectedSeason.toString();
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text('T$seasonNum'),
-                              selected: isSelected,
-                              onSelected: (_) => setState(() => _selectedSeason = int.parse(seasonNum)),
-                              selectedColor: const Color(0xFF00d4ff),
-                              backgroundColor: const Color(0xFF16213e),
-                              labelStyle: TextStyle(
-                                color: isSelected ? Colors.black : Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: [
+                        if (widget.series.rating.isNotEmpty)
+                          _InfoChip(icon: Icons.star, label: widget.series.rating, color: Colors.amber),
+                        if (widget.series.releaseDate.isNotEmpty)
+                          _InfoChip(icon: Icons.calendar_today, label: widget.series.releaseDate, color: const Color(0xFF00b0ff)),
+                        if (widget.series.genre.isNotEmpty)
+                          _InfoChip(icon: Icons.category, label: widget.series.genre, color: Colors.purple),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    // Episodes list
-                    ...(_seriesInfo!.seasons[_selectedSeason.toString()] ?? [])
-                        .map((episode) => _EpisodeTile(episode: episode)),
-                  ] else ...[
-                    const Center(
-                      child: Text('No hay episodios disponibles', style: TextStyle(color: Colors.grey)),
-                    ),
+                    if (widget.series.description.isNotEmpty) ...[
+                      const Text('Sinopsis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0f0f2e),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
+                        ),
+                        child: Text(
+                          widget.series.description,
+                          style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+
+                    // Episodes section
+                    if (_isLoading)
+                      const Center(child: SpinKitThreeBounce(color: Color(0xFF00b0ff), size: 24))
+                    else if (_seriesInfo != null && _seriesInfo!.seasons.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          const Text('Temporadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00b0ff).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${_seriesInfo!.seasons.length}',
+                              style: const TextStyle(color: Color(0xFF00b0ff), fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Season selector
+                      SizedBox(
+                        height: 40,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _seriesInfo!.seasons.keys.length,
+                          itemBuilder: (context, index) {
+                            final seasonNum = _seriesInfo!.seasons.keys.elementAt(index);
+                            final isSelected = seasonNum == _selectedSeason.toString();
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text('T$seasonNum'),
+                                selected: isSelected,
+                                onSelected: (_) => setState(() => _selectedSeason = int.parse(seasonNum)),
+                                selectedColor: const Color(0xFF00b0ff),
+                                backgroundColor: const Color(0xFF0f0f2e),
+                                side: BorderSide(
+                                  color: isSelected ? const Color(0xFF00b0ff) : const Color(0xFF1a2a5e),
+                                ),
+                                labelStyle: TextStyle(
+                                  color: isSelected ? Colors.black : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Episodes list
+                      ...(_seriesInfo!.seasons[_selectedSeason.toString()] ?? [])
+                          .map((episode) => _EpisodeTile(episode: episode)),
+                    ] else ...[
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0f0f2e),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(Icons.tv_off, color: Colors.grey, size: 30),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text('No hay episodios disponibles', style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -164,36 +218,66 @@ class _EpisodeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      leading: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0xFF16213e),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(Icons.play_circle, color: Color(0xFF00d4ff)),
-      ),
-      title: Text(
-        episode.name.isNotEmpty ? episode.name : 'Episodio ${episode.episodeNum}',
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(
-        'T${episode.seasonNum} E${episode.episodeNum}',
-        style: const TextStyle(color: Colors.grey, fontSize: 12),
-      ),
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => PlayerScreen(
-              title: episode.name.isNotEmpty ? episode.name : 'T${episode.seasonNum}E${episode.episodeNum}',
-              url: episode.streamUrl,
-              type: 'series',
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => PlayerScreen(
+                title: episode.name.isNotEmpty ? episode.name : 'T${episode.seasonNum}E${episode.episodeNum}',
+                url: episode.streamUrl,
+                type: 'series',
+              ),
+              transitionDuration: const Duration(milliseconds: 300),
+              transitionsBuilder: (_, animation, __, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
             ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0f0f2e),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF1a2a5e).withOpacity(0.5)),
           ),
-        );
-      },
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)]),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.play_circle, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      episode.name.isNotEmpty ? episode.name : 'Episodio ${episode.episodeNum}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'T${episode.seasonNum} E${episode.episodeNum}',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.play_arrow, color: Color(0xFF00b0ff)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -210,9 +294,9 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

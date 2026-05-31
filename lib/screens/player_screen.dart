@@ -35,7 +35,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller = VideoController(_player);
     _initPlayer();
 
-    // Auto-hide controls after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted && _isPlaying) {
         setState(() => _showControls = false);
@@ -130,7 +129,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               ),
             ),
 
-            // Top bar
+            // Top bar with gradient
             if (_showControls || !_isPlaying)
               Positioned(
                 top: 0,
@@ -138,43 +137,43 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 right: 0,
                 child: SafeArea(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.black87, Colors.transparent],
+                        colors: [Color(0xBB000000), Colors.transparent],
                       ),
                     ),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.of(context).pop(),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
                         ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             widget.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (widget.type == 'live')
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade700,
-                              borderRadius: BorderRadius.circular(4),
+                              gradient: const LinearGradient(colors: [Colors.red, Colors.redAccent]),
+                              borderRadius: BorderRadius.circular(6),
                               boxShadow: [
-                                BoxShadow(
-                                  color: Colors.red.withOpacity(0.3),
-                                  blurRadius: 8,
-                                ),
+                                BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 8),
                               ],
                             ),
                             child: Row(
@@ -202,29 +201,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               ),
 
-            // Center play/pause
+            // Center play/pause with glow
             if (!_hasError && (_showControls || !_isPlaying))
               Center(
                 child: GestureDetector(
-                  onTap: () {
-                    _player.playOrPause();
-                  },
+                  onTap: () => _player.playOrPause(),
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00b0ff), Color(0xFF0066ff)],
+                      ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00d4ff).withOpacity(0.3),
-                          blurRadius: 20,
+                          color: const Color(0xFF00b0ff).withOpacity(0.5),
+                          blurRadius: 30,
+                          spreadRadius: 5,
                         ),
                       ],
                     ),
                     child: Icon(
                       _isPlaying ? Icons.pause : Icons.play_arrow,
                       color: Colors.white,
-                      size: 56,
+                      size: 52,
                     ),
                   ),
                 ),
@@ -243,7 +243,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
-                        colors: [Colors.black87, Colors.transparent],
+                        colors: [Color(0xBB000000), Colors.transparent],
                       ),
                     ),
                     child: Column(
@@ -252,12 +252,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         // Progress bar
                         SliderTheme(
                           data: SliderThemeData(
-                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
                             trackShape: const CustomTrackShape(),
-                            overlayColor: const Color(0xFF00d4ff).withOpacity(0.2),
-                            activeTrackColor: const Color(0xFF00d4ff),
+                            overlayColor: const Color(0xFF00b0ff).withOpacity(0.2),
+                            activeTrackColor: const Color(0xFF00b0ff),
                             inactiveTrackColor: Colors.white24,
-                            thumbColor: const Color(0xFF00d4ff),
+                            thumbColor: const Color(0xFF00b0ff),
                           ),
                           child: Slider(
                             value: _duration.inMilliseconds > 0
@@ -277,13 +277,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               _formatDuration(_position),
                               style: const TextStyle(color: Colors.white70, fontSize: 12),
                             ),
-                            IconButton(
-                              icon: Icon(
-                                _isPlaying ? Icons.pause : Icons.play_arrow,
-                                color: Colors.white,
-                                size: 28,
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              onPressed: () => _player.playOrPause(),
+                              child: IconButton(
+                                icon: Icon(
+                                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                onPressed: () => _player.playOrPause(),
+                              ),
                             ),
                             Text(
                               _formatDuration(_duration),
@@ -301,17 +307,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
             if (_hasError)
               Center(
                 child: Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(28),
                   margin: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(16),
+                    color: const Color(0xFF0a0a1e),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20),
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.error_outline, color: Colors.red, size: 36),
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Error al reproducir',
@@ -323,20 +340,32 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _hasError = false;
-                                _errorMessage = '';
-                              });
-                              _initPlayer();
-                            },
-                            icon: const Icon(Icons.refresh, size: 18),
-                            label: const Text('REINTENTAR'),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: const LinearGradient(colors: [Color(0xFF00b0ff), Color(0xFF0066ff)]),
+                            ),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _hasError = false;
+                                  _errorMessage = '';
+                                });
+                                _initPlayer();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('REINTENTAR'),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           TextButton.icon(
