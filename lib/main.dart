@@ -44,7 +44,7 @@ class XtreamIPTVApp extends StatelessWidget {
           unselectedItemColor: Colors.grey,
           type: BottomNavigationBarType.fixed,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: const Color(0xFF1a1a2e),
           elevation: 4,
           shape: RoundedRectangleBorder(
